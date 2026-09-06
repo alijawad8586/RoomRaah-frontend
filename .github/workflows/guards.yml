@@ -1,0 +1,28 @@
+# The guards, run by something other than memory.
+#
+# The agent most likely to break one of these rules is exactly the one least likely to
+# remember the command that checks it. A guard nobody runs is documentation.
+
+name: guards
+
+on: [push, pull_request]
+
+jobs:
+  guards:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # The guards' own suite first, so that a green run below means something.
+      - name: guard self-test
+        run: npm run guard:test
+
+      # Reports SKIPPED, and passes, until app/ exists. A scan of nothing has proved
+      # nothing, and it must not read as a green tick.
+      - name: guards
+        run: npm run guard

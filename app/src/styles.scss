@@ -1,0 +1,47 @@
+@use 'styles/tokens' as *;
+@use 'styles/mixins' as *;
+@use 'styles/reset';
+
+// Global utility classes
+.sr-only {
+  @include sr-only;
+}
+
+// Accessible skip-link for keyboard users
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: $space-4;
+  background: $color-navy;
+  color: $color-surface;
+  padding: $space-2 $space-4;
+  border-radius: $radius-md;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-sm;
+  z-index: 9999;
+  transition: top $transition-fast;
+
+  &:focus {
+    top: $space-4;
+    outline: 2px solid $color-green;
+    outline-offset: 2px;
+  }
+}
+
+// Standard responsive page container
+.container-centered {
+  @include container-centered;
+}
+
+// Typography utilities
+.text-navy {
+  color: $color-navy;
+}
+
+.text-green {
+  color: $color-green;
+}
+
+.text-muted {
+  color: $color-slate-500;
+}

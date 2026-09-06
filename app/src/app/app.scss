@@ -1,0 +1,95 @@
+@use 'tokens' as *;
+@use 'mixins' as *;
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: $color-background;
+}
+
+.app-header {
+  background-color: $color-navy;
+  color: #ffffff;
+  padding: $space-4 0;
+  box-shadow: $shadow-sm;
+}
+
+.header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $space-3;
+}
+
+.brand-group {
+  display: flex;
+  align-items: baseline;
+  gap: $space-3;
+}
+
+.brand-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.brand-title {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.brand-subtitle {
+  font-size: $font-size-sm;
+  color: $color-slate-300;
+  display: none;
+
+  @include tablet-up {
+    display: inline;
+  }
+}
+
+.header-nav {
+  display: flex;
+  align-items: center;
+  gap: $space-4;
+  flex-wrap: wrap;
+}
+
+.nav-link {
+  color: $color-slate-200;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  transition: color $transition-fast;
+
+  @include focus-visible;
+
+  &:hover {
+    color: #ffffff;
+  }
+}
+
+.header-auth-status {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+}
+
+.user-greeting {
+  display: inline-flex;
+  align-items: center;
+  gap: $space-2;
+  font-size: $font-size-xs;
+  color: $color-slate-200;
+}
+
+.unverified-tag {
+  text-decoration: none;
+}
+
+.app-main-content {
+  flex: 1;
+}
+

@@ -1,0 +1,10 @@
+<!-- The way Angular actually writes this leak. Every line here passed the first version
+     of the guard: the guard allowed no dot, and tel: demanded a digit
+     immediately after the colon, which template interpolation never puts there. -->
+<article class="listing">
+  <h1>{{ listing.title }}</h1>
+  <a class="btn" href="tel:{{ listing.owner.phone }}">Phone</a>
+  <a class="btn" [href]="'tel:' + listing.owner.phone">Contact the owner</a>
+  <p>{{ listing.owner.email }}</p>
+  <p>{{ owner?.contactNumber }}</p>
+</article>

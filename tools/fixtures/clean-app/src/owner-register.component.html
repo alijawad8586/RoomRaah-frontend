@@ -1,0 +1,9 @@
+<form [formGroup]="form">
+  <label for="phone">Your phone number</label>
+  <input id="phone" formControlName="phoneNumber" />
+
+  <label for="cnic">Your CNIC</label>
+  <input id="cnic" formControlName="cnicNumber" />
+
+  <p class="hint">Owner accounts need a CNIC for the identity check. <!-- guard:allow-owner-contact: the owner's own details, on their own form --></p>
+</form>

@@ -1,0 +1,16 @@
+<!-- The real shape: ListingDetailDto.owner is a nested ListingOwnerDto of
+     { displayName, identityVerified, identityCheckedAt }. This fixture binds it the way
+     the API returns it, which is also the proof that widening the guard to allow a dot
+     did not make it flag the legitimate idiom. -->
+<article class="listing">
+  <h1>{{ listing.title }}</h1>
+  <p class="owner">Listed by {{ listing.owner.displayName }}</p>
+  <p class="owner-verdict">
+    Identity {{ listing.owner.identityVerified ? 'checked' : 'not checked' }}
+    on {{ listing.owner.identityCheckedAt | date }}
+  </p>
+
+  <!-- Contact stays on the site: messaging and visit requests, nothing else. -->
+  <button type="button" (click)="openConversation()">Message the owner</button>
+  <a [routerLink]="['/property', listing.id, 'visit']">Request a visit</a>
+</article>

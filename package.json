@@ -1,0 +1,11 @@
+{
+  "name": "roomraah-frontend-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Workspace and guards for the RoomRaah Angular frontend. The Angular application is generated into this directory; see AGENTS.md.",
+  "scripts": {
+    "guard": "node tools/check-rules.mjs",
+    "guard:test": "node --test tools/check-rules.test.mjs"
+  }
+}

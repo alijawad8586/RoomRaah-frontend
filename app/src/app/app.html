@@ -1,0 +1,43 @@
+<div class="app-shell">
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="container-centered header-inner">
+      <div class="brand-group">
+        <a routerLink="/" class="brand-link">
+          <h1 class="brand-title">RoomRaah</h1>
+        </a>
+      </div>
+
+      <nav class="header-nav" aria-label="Main Navigation">
+        <a routerLink="/design-system" class="nav-link">Design System</a>
+        <a routerLink="/signup" class="nav-link">Sign Up</a>
+        <a routerLink="/login" class="nav-link">Sign In</a>
+        <a routerLink="/verify" class="nav-link">Verify</a>
+        <a routerLink="/reset-password" class="nav-link">Reset Password</a>
+      </nav>
+
+      <div class="header-auth-status">
+        @if (auth.isAuthenticated()) {
+          <span class="user-greeting">
+            Signed in: <strong>{{ auth.currentUser()?.fullName }}</strong>
+            <app-badge variant="confirmed" size="sm">{{ auth.userRole() }}</app-badge>
+            @if (!auth.isEmailVerified()) {
+              <a routerLink="/verify" class="unverified-tag">
+                <app-badge variant="warning" size="sm">Unverified Email</app-badge>
+              </a>
+            }
+          </span>
+          <app-button variant="outline" size="sm" (clicked)="auth.logout().subscribe()">
+            Sign Out
+          </app-button>
+        } @else {
+          <app-badge variant="inspection" size="sm">RoomRaah</app-badge>
+        }
+      </div>
+    </div>
+  </header>
+
+  <main class="app-main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>

@@ -1,0 +1,9 @@
+<!-- Business rule 116: the Admin user detail screen is the one place a phone number and,
+     for an owner, a CNIC are returned and shown. AdminUserDto names them phoneNumber and
+     cnicNumber with no owner prefix, and the guard must not flag them — a guard that
+     blocks a required screen is a guard somebody switches off. -->
+<dl class="admin-user">
+  <dt>Email</dt><dd>{{ user.email }}</dd>
+  <dt>Phone</dt><dd>{{ user.phoneNumber }}</dd>
+  <dt>CNIC</dt><dd>{{ user.cnicNumber }}</dd>
+</dl>

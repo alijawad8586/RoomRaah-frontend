@@ -1,0 +1,2566 @@
+{
+  "info": {
+    "name": "RoomRaah API",
+    "description": "Every endpoint in §5 of the product document.\n\nStart in **Auth**: run one of the \"Login (seeded ...)\" requests and the collection stores the access and refresh tokens for you. Then run **Locations and facilities** and **Search** once, which fill in the ids the rest of the requests use.\n\nAll seeded accounts use the password `Password1`. Emails go to Mailpit at http://localhost:8025 in development, which is where the OTP codes and the reset links are.\n\nLive messaging is the SignalR hub at `/hubs/chat` and is not a REST request; it is described in the Messages folder.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{accessToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register (seeker)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Creates an unverified account. Rule 4: IsEmailVerified is false until the code is accepted. The OTP is emailed; in development it is visible in Mailpit at http://localhost:8025.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Ayesha Khan\",\n  \"email\": \"ayesha.seeker@roomraah.local\",\n  \"phoneNumber\": \"+923001112233\",\n  \"password\": \"Password1\",\n  \"role\": \"Seeker\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register (owner)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "An owner also sends a CNIC, which §Field Validation requires of owners alone.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fullName\": \"Bilal Ahmed\",\n  \"email\": \"bilal.owner@roomraah.local\",\n  \"phoneNumber\": \"+923004445566\",\n  \"password\": \"Password1\",\n  \"role\": \"Owner\",\n  \"cnicNumber\": \"3520112345671\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "verify-otp"
+              ]
+            },
+            "description": "Returns a fresh session, because a token issued before verification is stale the moment the code is accepted. Paste the code from Mailpit.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ayesha.seeker@roomraah.local\",\n  \"code\": \"000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.accessToken) {",
+                  "  pm.collectionVariables.set(\"accessToken\", body.accessToken);",
+                  "  pm.collectionVariables.set(\"refreshToken\", body.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resend OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/resend-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "resend-otp"
+              ]
+            },
+            "description": "Rule 7: at most three in any ten-minute window, answered 429 after that.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"ayesha.seeker@roomraah.local\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login (seeded seeker)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Signs in and stores both tokens on the collection, so every request below is authenticated without another step.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seeker1@roomraah.local\",\n  \"password\": \"Password1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"signed in\", () => pm.response.to.have.status(200));",
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set(\"accessToken\", body.accessToken);",
+                  "pm.collectionVariables.set(\"refreshToken\", body.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (seeded owner)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "The owner whose identity has been checked — the only one whose listings can reach Published, per rule 23.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"owner.checked@roomraah.local\",\n  \"password\": \"Password1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set(\"accessToken\", body.accessToken);",
+                  "pm.collectionVariables.set(\"refreshToken\", body.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login (seeded admin, can inspect)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "The admin whose CanInspect is true. admin2@roomraah.local is the one whose is false — rules 109 and 110 tell them apart.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@roomraah.local\",\n  \"password\": \"Password1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.collectionVariables.set(\"accessToken\", body.accessToken);",
+                  "pm.collectionVariables.set(\"refreshToken\", body.refreshToken);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refresh",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Rule 9: the Redis revocation set first, then the database, then rotation.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.accessToken) {",
+                  "  pm.collectionVariables.set(\"accessToken\", body.accessToken);",
+                  "  pm.collectionVariables.set(\"refreshToken\", body.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Rule 10: writes a revocation entry keyed on a digest of the token, never the token itself — the cache service logs every key it touches.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Forgot password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seeker1@roomraah.local\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reset password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "Rule 12: the link works once and expires in thirty minutes.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"seeker1@roomraah.local\",\n  \"token\": \"paste-the-token-from-the-email\",\n  \"newPassword\": \"Password2\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Register, verify, sign in and out. The sign-in requests store both tokens on the collection, so everything below is authenticated."
+    },
+    {
+      "name": "Locations and facilities",
+      "item": [
+        {
+          "name": "Cities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/locations/cities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "locations",
+                "cities"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body[0] && body[0].id) { pm.collectionVariables.set(\"cityId\", body[0] && body[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Areas in a city",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/locations/cities/{{cityId}}/areas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "locations",
+                "cities",
+                "{{cityId}}",
+                "areas"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body[0] && body[0].id) { pm.collectionVariables.set(\"areaId\", body[0] && body[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Suggest",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/locations/suggest?q=Punjab",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "locations",
+                "suggest"
+              ],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "Punjab"
+                }
+              ]
+            },
+            "description": "Cities, areas and landmarks in one list. Cached for 24 hours.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "const landmark = body.find(s => s.type === \"Landmark\");",
+                  "if (landmark) { pm.collectionVariables.set(\"landmarkId\", landmark.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Facilities",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/facilities",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "facilities"
+              ]
+            },
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body[0] && body[0].id) { pm.collectionVariables.set(\"facilityId\", body[0] && body[0].id); }"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      "description": "Reference data, cached for 24 hours. These requests also store the ids the rest of the collection uses."
+    },
+    {
+      "name": "Search and public listings",
+      "item": [
+        {
+          "name": "Search",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/properties?page=1&pageSize=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "properties"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "12"
+                }
+              ]
+            },
+            "description": "Rule 29 lists every filter this accepts: cityId, areaId, landmarkId with maxDistanceKm, minRent, maxRent, roomType, genderPolicy, facilityIds, availableOnly, sort, page, pageSize.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.items[0] && body.items[0].id) { pm.collectionVariables.set(\"propertyId\", body.items[0] && body.items[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Search near a landmark",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/properties?landmarkId={{landmarkId}}&maxDistanceKm=10&sort=Distance&pageSize=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "properties"
+              ],
+              "query": [
+                {
+                  "key": "landmarkId",
+                  "value": "{{landmarkId}}"
+                },
+                {
+                  "key": "maxDistanceKm",
+                  "value": "10"
+                },
+                {
+                  "key": "sort",
+                  "value": "Distance"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "12"
+                }
+              ]
+            },
+            "description": "Rule 31: the haversine runs in SQL Server, so distance sorts and pages like any other column. Rule 74: maxDistanceKm and sort=Distance both need a landmark.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Featured",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/properties/featured",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "properties",
+                "featured"
+              ]
+            },
+            "description": "Rule 82: at most eight, badge first, then the most recently confirmed availability.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Compare",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/properties/compare?ids={{propertyId}}&landmarkId={{landmarkId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "properties",
+                "compare"
+              ],
+              "query": [
+                {
+                  "key": "ids",
+                  "value": "{{propertyId}}"
+                },
+                {
+                  "key": "landmarkId",
+                  "value": "{{landmarkId}}"
+                }
+              ]
+            },
+            "description": "Rule 35: at most three ids once duplicates are removed.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Property detail",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/properties/{{propertyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "properties",
+                "{{propertyId}}"
+              ]
+            },
+            "description": "Rule 84: the owner is a display name, an identity-check verdict and the date of that check — and nothing else.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Property photos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/properties/{{propertyId}}/photos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "properties",
+                "{{propertyId}}",
+                "photos"
+              ]
+            },
+            "description": "Rule 79: every photo that is not PendingAdd, and no response says which are pending.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Property reviews",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/properties/{{propertyId}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "properties",
+                "{{propertyId}}",
+                "reviews"
+              ]
+            },
+            "description": "Rule 94: Approved only, newest first, with the average and the count.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Anonymous. Browsing is public; acting requires an account."
+    },
+    {
+      "name": "Shortlist",
+      "item": [
+        {
+          "name": "Save a listing",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/saved/{{propertyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "saved",
+                "{{propertyId}}"
+              ]
+            },
+            "description": "Rule 34: once per person. Rule 86: only a published listing."
+          },
+          "response": []
+        },
+        {
+          "name": "My shortlist",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/saved?page=1&pageSize=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "saved"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "12"
+                }
+              ]
+            },
+            "description": "Rule 87: newest save first, and only the listings still published."
+          },
+          "response": []
+        },
+        {
+          "name": "Remove from shortlist",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/saved/{{propertyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "saved",
+                "{{propertyId}}"
+              ]
+            },
+            "description": "Rule 87: a save whose listing left the site is kept and stays deletable."
+          },
+          "response": []
+        }
+      ],
+      "description": "Private to one account."
+    },
+    {
+      "name": "Visits",
+      "item": [
+        {
+          "name": "Request a visit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/visits",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "visits"
+              ]
+            },
+            "description": "Rule 36: one open request per listing per seeker. Rule 92: the owner is emailed.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"propertyId\": \"{{propertyId}}\",\n  \"visitType\": \"Physical\",\n  \"preferredAt\": \"2026-10-01T15:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.id) { pm.collectionVariables.set(\"visitId\", body.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My visit requests",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/visits/my?page=1&pageSize=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "visits",
+                "my"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "12"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Owner visit queue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/owner/visits?page=1&pageSize=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "owner",
+                "visits"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "12"
+                }
+              ]
+            },
+            "description": "Rule 93: the seeker is named by display name alone, and the owner not at all."
+          },
+          "response": []
+        },
+        {
+          "name": "Respond to a visit (owner)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/visits/{{visitId}}/respond",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "visits",
+                "{{visitId}}",
+                "respond"
+              ]
+            },
+            "description": "Rule 88: only from Requested. Rule 89: a decline requires the note.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Accepted\",\n  \"ownerResponseNote\": \"Come any time after 4pm.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Complete a visit",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/visits/{{visitId}}/complete",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "visits",
+                "{{visitId}}",
+                "complete"
+              ]
+            },
+            "description": "Rule 90: only from Accepted, only once the preferred time has passed, by either party. §5 named no endpoint for this, which left rule 38 gating a feature nothing could reach."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel a visit (seeker)",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/visits/{{visitId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "visits",
+                "{{visitId}}",
+                "cancel"
+              ]
+            },
+            "description": "Rule 91: the seeker who made it, from Requested or Accepted only."
+          },
+          "response": []
+        }
+      ],
+      "description": "The only way a visit is arranged in this product — there are no call buttons and no WhatsApp links anywhere in it."
+    },
+    {
+      "name": "Reviews",
+      "item": [
+        {
+          "name": "Write a review",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reviews"
+              ]
+            },
+            "description": "Rule 38: only after a visit on this listing reached Completed. Rule 41: it is created Pending and is invisible until an admin approves it.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"propertyId\": \"{{propertyId}}\",\n  \"rating\": 4,\n  \"comment\": \"Clean room and the mess food is better than I expected.\",\n  \"stayStatus\": \"Visited\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "item": [
+        {
+          "name": "Report a listing",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/reports",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "reports"
+              ]
+            },
+            "description": "Rule 42: one unresolved report per listing per person, where unresolved means Open or UnderReview.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"propertyId\": \"{{propertyId}}\",\n  \"reason\": \"AlreadyTaken\",\n  \"details\": \"The owner told me the room went a month ago; the listing still says two beds are free.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Messages",
+      "item": [
+        {
+          "name": "Open a conversation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/conversations",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conversations"
+              ]
+            },
+            "description": "Rule 43 made a conversation unique per property and seeker, and §5 named no endpoint that opened one. Calling this twice returns the existing thread with 200 rather than refusing.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"propertyId\": \"{{propertyId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.id) { pm.collectionVariables.set(\"conversationId\", body.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My conversations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/conversations?page=1&pageSize=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conversations"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "12"
+                }
+              ]
+            },
+            "description": "Rule 101: most recent message first, and the other participant by display name alone."
+          },
+          "response": []
+        },
+        {
+          "name": "Messages in a conversation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/conversations/{{conversationId}}/messages?page=1&pageSize=30",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "30"
+                }
+              ]
+            },
+            "description": "Oldest first, which is the order a conversation is read in."
+          },
+          "response": []
+        },
+        {
+          "name": "Send a message",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/conversations/{{conversationId}}/messages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conversations",
+                "{{conversationId}}",
+                "messages"
+              ]
+            },
+            "description": "Rule 105: pushed over /hubs/chat while the recipient is connected, and emailed when they are not — at most one email per conversation per recipient per hour.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Assalam o alaikum. Is the room still free from the 1st?\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark a conversation read",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/conversations/{{conversationId}}/read",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "conversations",
+                "{{conversationId}}",
+                "read"
+              ]
+            },
+            "description": "Rule 104: marks everything the caller did not send, and answers with how many. A thread with nothing unread marks nothing and is not a refusal."
+          },
+          "response": []
+        }
+      ],
+      "description": "What §Contact Stays On the Site promises instead of a phone number. Live delivery is the SignalR hub at {{baseUrl}}/../hubs/chat, which Postman cannot drive — the token goes in the access_token query parameter because a WebSocket handshake cannot set a header."
+    },
+    {
+      "name": "Owner listings",
+      "item": [
+        {
+          "name": "Create a listing (draft)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/owner/properties",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "owner",
+                "properties"
+              ]
+            },
+            "description": "Rule 14: created as Draft. Rule 17: latitude and longitude are required — the owner drops a pin, there is no geocoder in this product.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"areaId\": \"{{areaId}}\",\n  \"title\": \"Bright shared room near Main Boulevard\",\n  \"description\": \"A four-bed shared room in a well-kept portion, ten minutes from Main Boulevard.\",\n  \"addressLine\": \"House 42, Block C, Gulberg III\",\n  \"latitude\": 31.5204,\n  \"longitude\": 74.3587,\n  \"roomType\": \"Shared\",\n  \"genderPolicy\": \"Boys\",\n  \"totalBeds\": 4,\n  \"availableBeds\": 2,\n  \"monthlyRent\": 18000,\n  \"securityDeposit\": 18000,\n  \"utilitiesCharge\": 2500,\n  \"messCharge\": 8000,\n  \"houseRules\": \"No smoking indoors. Guests until 10pm.\",\n  \"facilityIds\": [\n    \"{{facilityId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.id) { pm.collectionVariables.set(\"ownerPropertyId\", body.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My listings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/owner/properties?page=1&pageSize=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "owner",
+                "properties"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "12"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "One of my listings",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/owner/properties/{{ownerPropertyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "owner",
+                "properties",
+                "{{ownerPropertyId}}"
+              ]
+            },
+            "description": "Rule 18: an owner reads and modifies only their own."
+          },
+          "response": []
+        },
+        {
+          "name": "Upload a photo",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/owner/properties/{{ownerPropertyId}}/photos",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "owner",
+                "properties",
+                "{{ownerPropertyId}}",
+                "photos"
+              ]
+            },
+            "description": "§9: 5 MB maximum, jpeg/png/webp checked by decoding the bytes rather than by the extension. Every upload generates a thumbnail.",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": [],
+                  "description": "A jpeg, png or webp under 5 MB."
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.id) { pm.collectionVariables.set(\"photoId\", body.id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reorder photos",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/owner/properties/{{ownerPropertyId}}/photos/order",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "owner",
+                "properties",
+                "{{ownerPropertyId}}",
+                "photos",
+                "order"
+              ]
+            },
+            "description": "The list must name every photo the listing will hold, exactly once.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"photoIds\": [\n    \"{{photoId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Make a photo primary",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/owner/properties/{{ownerPropertyId}}/photos/{{photoId}}/primary",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "owner",
+                "properties",
+                "{{ownerPropertyId}}",
+                "photos",
+                "{{photoId}}",
+                "primary"
+              ]
+            },
+            "description": "Exactly one per listing; it is what a card shows."
+          },
+          "response": []
+        },
+        {
+          "name": "Delete a photo",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/owner/properties/{{ownerPropertyId}}/photos/{{photoId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "owner",
+                "properties",
+                "{{ownerPropertyId}}",
+                "photos",
+                "{{photoId}}"
+              ]
+            },
+            "description": "Rule 54: in place while the listing is not Published, and a proposal once it is."
+          },
+          "response": []
+        },
+        {
+          "name": "Submit for review",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/owner/properties/{{ownerPropertyId}}/submit",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "owner",
+                "properties",
+                "{{ownerPropertyId}}",
+                "submit"
+              ]
+            },
+            "description": "Rule 52: only from Draft or ChangesRequested. Rule 15: between three and fifteen live photographs."
+          },
+          "response": []
+        },
+        {
+          "name": "Edit a listing",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/owner/properties/{{ownerPropertyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "owner",
+                "properties",
+                "{{ownerPropertyId}}"
+              ]
+            },
+            "description": "Rule 19: editing a Published listing creates a revision. The live row is never modified by an owner.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"areaId\": \"{{areaId}}\",\n  \"title\": \"Bright shared room near Main Boulevard (renamed)\",\n  \"description\": \"A four-bed shared room in a well-kept portion, ten minutes from Main Boulevard.\",\n  \"addressLine\": \"House 42, Block C, Gulberg III\",\n  \"latitude\": 31.5204,\n  \"longitude\": 74.3587,\n  \"roomType\": \"Shared\",\n  \"genderPolicy\": \"Boys\",\n  \"totalBeds\": 4,\n  \"availableBeds\": 2,\n  \"monthlyRent\": 19000,\n  \"securityDeposit\": 19000,\n  \"utilitiesCharge\": 2500,\n  \"messCharge\": 8000,\n  \"houseRules\": \"No smoking indoors.\",\n  \"facilityIds\": [\n    \"{{facilityId}}\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Confirm availability",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/owner/properties/{{ownerPropertyId}}/availability",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "owner",
+                "properties",
+                "{{ownerPropertyId}}",
+                "availability"
+              ]
+            },
+            "description": "Rule 21: a bed count on its own lands in the availability queue rather than the content one. Re-confirming an unchanged count is accepted here and refused on PUT — it is what keeps the listing off the stale list.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"availableBeds\": 1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request an inspection",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/owner/properties/{{ownerPropertyId}}/inspection-request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "owner",
+                "properties",
+                "{{ownerPropertyId}}",
+                "inspection-request"
+              ]
+            },
+            "description": "Rule 108: once per listing. After the first visit RoomRaah re-inspects on its own schedule, and no response anywhere names a date that has not happened."
+          },
+          "response": []
+        }
+      ],
+      "description": "Sign in as the owner first. Rule 19: once a listing is published, an edit becomes a revision rather than a write."
+    },
+    {
+      "name": "Admin - listings and revisions",
+      "item": [
+        {
+          "name": "Review queue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/properties?status=PendingReview&page=1&pageSize=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "properties"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "PendingReview"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "12"
+                }
+              ]
+            },
+            "description": "Oldest submission first. Nothing in the admin area is cached."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.items[0] && body.items[0].id) { pm.collectionVariables.set(\"adminPropertyId\", body.items[0] && body.items[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listing for review",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/properties/{{adminPropertyId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "properties",
+                "{{adminPropertyId}}"
+              ]
+            },
+            "description": "The verification checks and an owner summary — with no phone number and no email address, because rule 33 has no exception for an admin panel."
+          },
+          "response": []
+        },
+        {
+          "name": "Record a verification check",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/properties/{{adminPropertyId}}/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "properties",
+                "{{adminPropertyId}}",
+                "verify"
+              ]
+            },
+            "description": "Rule 23: OwnerIdentity, Address, Photos and Facilities must all pass before a listing can be published. Availability is recordable but does not gate publishing.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"checkType\": \"OwnerIdentity\",\n  \"status\": \"Checked\",\n  \"note\": \"CNIC matches the name on the account.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Approve and publish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/properties/{{adminPropertyId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "properties",
+                "{{adminPropertyId}}",
+                "approve"
+              ]
+            },
+            "description": "Rule 24: sets Published and stamps AvailabilityConfirmedAt. Rule 124: this is also the way an Unpublished listing comes back.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"adminNote\": \"Everything checks out.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Request changes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/properties/{{adminPropertyId}}/request-changes",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "properties",
+                "{{adminPropertyId}}",
+                "request-changes"
+              ]
+            },
+            "description": "Rule 26: a refusal requires a note, or the owner has nothing to act on.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"adminNote\": \"Please add a photograph of the kitchen.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reject",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/properties/{{adminPropertyId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "properties",
+                "{{adminPropertyId}}",
+                "reject"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"adminNote\": \"The address does not match the utility bill.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Unpublish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/properties/{{adminPropertyId}}/unpublish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "properties",
+                "{{adminPropertyId}}",
+                "unpublish"
+              ]
+            },
+            "description": "Rule 122: only from Published, and only with a note. §5 had ten admin listing endpoints and none of them set this status, so a listing could never leave the public site through the API.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"adminNote\": \"The listing no longer matches the property.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Revision queues",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/revisions?kind=Content&page=1&pageSize=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "revisions"
+              ],
+              "query": [
+                {
+                  "key": "kind",
+                  "value": "Content"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "12"
+                }
+              ]
+            },
+            "description": "Two queues, because availability is not a price change. Pass kind=Availability for the other one."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.items[0] && body.items[0].id) { pm.collectionVariables.set(\"revisionId\", body.items[0] && body.items[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "One revision",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/revisions/{{revisionId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "revisions",
+                "{{revisionId}}"
+              ]
+            },
+            "description": "The before-and-after an admin decides from."
+          },
+          "response": []
+        },
+        {
+          "name": "Approve a revision",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/revisions/{{revisionId}}/approve",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "revisions",
+                "{{revisionId}}",
+                "approve"
+              ]
+            },
+            "description": "Rule 25: copies the fields onto the listing, applies the pending photo transitions and drops the properties: cache prefix.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"adminNote\": \"Approved.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reject a revision",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/revisions/{{revisionId}}/reject",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "revisions",
+                "{{revisionId}}",
+                "reject"
+              ]
+            },
+            "description": "Rule 27: the live listing is left exactly as it was.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"adminNote\": \"The new rent is not supported by anything on the listing.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Sign in as an admin first."
+    },
+    {
+      "name": "Admin - reviews and reports",
+      "item": [
+        {
+          "name": "Review moderation queue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/reviews?state=Pending&page=1&pageSize=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "reviews"
+              ],
+              "query": [
+                {
+                  "key": "state",
+                  "value": "Pending"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "12"
+                }
+              ]
+            },
+            "description": "Rule 41 created every review Pending and §5 had no endpoint that moved one, which left the public review list empty for the life of the product."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.items[0] && body.items[0].id) { pm.collectionVariables.set(\"reviewId\", body.items[0] && body.items[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Moderate a review",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/reviews/{{reviewId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "reviews",
+                "{{reviewId}}"
+              ]
+            },
+            "description": "Rule 96: Approved or Hidden, and either may be set from either of the other two.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"state\": \"Approved\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Report queue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/reports?status=Open&page=1&pageSize=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "reports"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "Open"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "12"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.items[0] && body.items[0].id) { pm.collectionVariables.set(\"reportId\", body.items[0] && body.items[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resolve a report",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/reports/{{reportId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "reports",
+                "{{reportId}}"
+              ]
+            },
+            "description": "Rule 97: UnderReview, Upheld or Dismissed; the two verdicts require a note and cannot be set twice. Rule 98: upholding does not take the listing down.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"Upheld\",\n  \"adminNote\": \"Confirmed with the owner; the room was taken.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Admin - inspections and the badge",
+      "item": [
+        {
+          "name": "Record an inspection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/inspections",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "inspections"
+              ]
+            },
+            "description": "Rule 109: only an admin whose CanInspect is true, and only against a date that has already passed — a future date would be a scheduled visit, which rule 115 says does not exist anywhere in this product.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"propertyId\": \"{{propertyId}}\",\n  \"inspectedAt\": \"2026-09-01T11:00:00Z\",\n  \"result\": \"Passed\",\n  \"notes\": \"Rooms, facilities and the address all matched the listing.\",\n  \"feeAmount\": 1500,\n  \"feeCollectedAt\": \"2026-08-31T09:00:00Z\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Due for re-inspection",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/inspections/due?page=1&pageSize=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "inspections",
+                "due"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "12"
+                }
+              ]
+            },
+            "description": "Rule 114: badged listings not visited in thirty days, longest overdue first. A query rather than a sweep — a WHERE clause is right without having had to run."
+          },
+          "response": []
+        },
+        {
+          "name": "Grant the badge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/properties/{{propertyId}}/badge/grant",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "properties",
+                "{{propertyId}}",
+                "badge",
+                "grant"
+              ]
+            },
+            "description": "Rule 110: only when the most recent inspection passed, only by an admin who makes visits, and never twice. Rule 112: the reason is required and is recorded.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Passed the physical inspection on the 1st.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Remove the badge",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/properties/{{propertyId}}/badge/remove",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "properties",
+                "{{propertyId}}",
+                "badge",
+                "remove"
+              ]
+            },
+            "description": "Rule 111: any admin. A claim being withdrawn must not wait for the one person who makes visits.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"A report about this listing was upheld.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "The only paid feature in the product. Sign in as admin@roomraah.local, whose CanInspect is true; admin2@roomraah.local is the one it is false for."
+    },
+    {
+      "name": "Admin - users",
+      "item": [
+        {
+          "name": "Accounts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users?role=Owner&isActive=true&page=1&pageSize=12",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users"
+              ],
+              "query": [
+                {
+                  "key": "role",
+                  "value": "Owner"
+                },
+                {
+                  "key": "isActive",
+                  "value": "true"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "pageSize",
+                  "value": "12"
+                }
+              ]
+            },
+            "description": "Rule 117: every account including the deactivated ones — leave isActive off to see them. This list carries no CNIC and no phone number."
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "if (body.items[0] && body.items[0].id) { pm.collectionVariables.set(\"adminUserId\", body.items[0] && body.items[0].id); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "One account",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{adminUserId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{adminUserId}}"
+              ]
+            },
+            "description": "Rule 116: the only endpoint in the product that returns a phone number, and the only one that returns a CNIC. It exists so that the admin recording the OwnerIdentity check can see the identity being checked."
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{adminUserId}}/deactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{adminUserId}}",
+                "deactivate"
+              ]
+            },
+            "description": "Rule 118: not your own account, and not another admin. Rule 11: a deactivated account cannot log in.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Repeated abusive messages.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reactivate",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/admin/users/{{adminUserId}}/reactivate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "admin",
+                "users",
+                "{{adminUserId}}",
+                "reactivate"
+              ]
+            },
+            "description": "§5 listed only the deactivation, which made a misclick permanent.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"The report against this account was dismissed.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "The one area of §5 that belonged to no phase of the build plan."
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5019/api/v1"
+    },
+    {
+      "key": "accessToken",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    },
+    {
+      "key": "cityId",
+      "value": ""
+    },
+    {
+      "key": "areaId",
+      "value": ""
+    },
+    {
+      "key": "landmarkId",
+      "value": ""
+    },
+    {
+      "key": "facilityId",
+      "value": ""
+    },
+    {
+      "key": "propertyId",
+      "value": ""
+    },
+    {
+      "key": "ownerPropertyId",
+      "value": ""
+    },
+    {
+      "key": "adminPropertyId",
+      "value": ""
+    },
+    {
+      "key": "photoId",
+      "value": ""
+    },
+    {
+      "key": "revisionId",
+      "value": ""
+    },
+    {
+      "key": "visitId",
+      "value": ""
+    },
+    {
+      "key": "reviewId",
+      "value": ""
+    },
+    {
+      "key": "reportId",
+      "value": ""
+    },
+    {
+      "key": "conversationId",
+      "value": ""
+    },
+    {
+      "key": "adminUserId",
+      "value": ""
+    }
+  ]
+}

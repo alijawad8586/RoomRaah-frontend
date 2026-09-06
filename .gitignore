@@ -1,0 +1,10 @@
+# The Angular application's own build output. The app itself is committed.
+app/.angular/
+app/dist/
+app/out-tsc/
+**/node_modules/
+
+# Environment files. The API base URL belongs in src/environments, not here.
+.env
+.env.*
+!.env.example

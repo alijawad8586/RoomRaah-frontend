@@ -1,0 +1,11 @@
+{
+  "name": "roomraah-leaking-fixture",
+  "private": true,
+  "dependencies": {
+    "@angular/core": "^21.0.0",
+    "@angular/material": "^21.0.0"
+  },
+  "devDependencies": {
+    "tailwindcss": "^4.0.0"
+  }
+}
