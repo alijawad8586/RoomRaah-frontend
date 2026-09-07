@@ -224,7 +224,43 @@ export const WALK = [
     name: 'owner-dashboard',
     as: 'owner',
     goto: '/owner',
-    expect: [{ sel: 'main' }],
+    expect: [
+      { sel: '[data-smoke=owner-listings], [data-smoke=owner-empty]' },
+      { role: 'link', name: /add a listing/i },
+      'Visit requests',
+    ],
+  },
+  {
+    // The whole point of the owner screens: a save on a published listing is a proposal, and
+    // the owner is told so before they type, not after they press. Rule 2 of AGENTS.md §3.
+    name: 'editing-a-live-listing-says-it-is-a-revision',
+    as: 'owner',
+    goto: '/owner/listing/4',
+    expect: [
+      { sel: '[data-smoke=form-revision]' },
+      { role: 'button', name: /send changes for review/i },
+    ],
+    absent: [{ role: 'button', name: /^save$/i }],
+  },
+  {
+    name: 'listing-form-has-a-map-pin',
+    as: 'owner',
+    goto: '/owner/listing/4',
+    do: async (page) => {
+      // Leaflet renders its tiles into a container it builds itself. If the stylesheet or
+      // the library failed to load, this is what would be missing.
+      await page.waitForSelector('.leaflet-container', { timeout: 10000 });
+    },
+    expect: [{ sel: '.leaflet-container' }, { sel: '[data-smoke=photo-list]' }],
+  },
+  {
+    name: 'new-listing-form',
+    as: 'owner',
+    goto: '/owner/listing/new',
+    expect: [
+      { role: 'heading', name: /add a listing/i },
+      { role: 'button', name: /create listing/i },
+    ],
   },
   {
     // Signed in, wrong role. Home rather than the sign-in screen: signing in again would

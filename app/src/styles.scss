@@ -1,6 +1,8 @@
 @use 'styles/tokens' as *;
 @use 'styles/mixins' as *;
 @use 'styles/reset';
+// Leaflet's own stylesheet, for the same reason the pin below is global.
+@use 'leaflet/dist/leaflet.css';
 
 // Global utility classes
 .sr-only {
@@ -44,4 +46,23 @@
 
 .text-muted {
   color: $color-slate-500;
+}
+
+// The pin Leaflet draws. Global on purpose: the map's DOM is built outside any component's
+// view, so component-scoped styles never reach it. It is an element rather than Leaflet's
+// default marker image, which a bundler renames and then fails to find.
+
+.map-pin-marker {
+  width: 22px;
+  height: 22px;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  background: $color-navy;
+  border: 3px solid $color-surface;
+  box-shadow: 0 2px 6px rgb(0 0 0 / 35%);
+  cursor: grab;
+}
+
+.leaflet-container {
+  font: inherit;
 }

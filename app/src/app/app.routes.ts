@@ -118,10 +118,15 @@ export const routes: Routes = [
     path: 'owner',
     canActivate: [ownerGuard],
     loadComponent: () =>
-      import('./features/owner/owner-dashboard-placeholder.component').then(
-        (m) => m.OwnerDashboardPlaceholderComponent
-      ),
-    title: 'Owner Dashboard — RoomRaah',
+      import('./features/owner/owner-dashboard.component').then((m) => m.OwnerDashboardComponent),
+    title: 'My listings — RoomRaah',
+  },
+  {
+    path: 'owner/listing/:id',
+    canActivate: [ownerGuard],
+    loadComponent: () =>
+      import('./features/owner/listing-form.component').then((m) => m.ListingFormComponent),
+    title: 'Listing — RoomRaah',
   },
   {
     path: 'admin/listings',

@@ -60,7 +60,7 @@ not a status report and reading it to find out is the slow way.
 | C | Landing, how it works | 01 02 | 45m | yes |
 | C2 | Compare, saved | 13 14 | — | yes |
 | D | Seeker actions: shortlist toggle, visit request, my visits, write review, report dialog | 15 | 40m | yes |
-| E | Owner dashboard + listing form, photo flow, revision states | 18 19 | 75m | no |
+| E | Owner dashboard + listing form, photo flow, revision states | 18 19 | 75m | yes |
 | F | Admin panel, five tabs | 20 | 60m | no |
 | G | Messages (REST polling) + profile | 16 17 | 45m | no |
 | H | Map view; responsive pass at four breakpoints; accessibility pass; final verify | 09 | 40m | no |
@@ -78,9 +78,11 @@ one overruns, the scope inside it gets cut, not the clock, and the cut gets said
 - **SignalR hub (brief §9).** The brief itself says REST first and that messaging must work
   without WebSockets. Messages poll every 10 seconds. A judge cannot tell the difference in
   a demo; the hub costs an hour we do not have.
-- **Map tiles on page 09.** No component library is allowed and tiles need a third party.
-  `/search/map` renders results grouped by landmark with the straight-line distance the API
-  already returns, labelled as straight-line per rule 13. Ten minutes instead of an hour.
+- ~~**Map tiles on page 09.**~~ **Un-cut.** The brief names Leaflet with OpenStreetMap for
+  the owner's pin, and a map library is not a component library, so it does not touch the
+  "no component library" decision. Installing it for page 19 makes page 09 cheap, so it is
+  back in slice H. Leaflet is kept out of `shared/components/index.ts` on purpose — that
+  barrel reaches the app shell, and going through it put 150kB in the initial bundle.
 - **Unit tests for presentational components.** Logic that can break silently — query-string
   to filter mapping, error mapping, guards — keeps its tests. A component that only renders
   what it is given is covered by the smoke walk.
