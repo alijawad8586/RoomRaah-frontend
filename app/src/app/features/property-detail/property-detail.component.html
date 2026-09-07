@@ -167,11 +167,17 @@
               }
             </ul>
 
-            @if (reviewCount() > reviews().length) {
-              <a class="review-all" [routerLink]="['/property', listing.id, 'reviews']">
+            <!-- Shown whenever there is a review at all, not only when some are hidden:
+                 the reviews page is its own page with its own paging, and gating the only
+                 link to it on "there are more than fit here" left it unreachable by
+                 clicking on every listing the seed data has. -->
+            <a class="review-all" [routerLink]="['/property', listing.id, 'reviews']">
+              @if (reviewCount() > reviews().length) {
                 Read all {{ reviewCount() }} reviews
-              </a>
-            }
+              } @else {
+                Read the reviews
+              }
+            </a>
           }
         </section>
       </div>
@@ -218,9 +224,20 @@
         </div>
 
         <div class="action-card">
-          <a class="action-primary" [routerLink]="['/property', listing.id, 'visit']">
-            Request a visit
-          </a>
+          <!-- Rule 7: one open request per listing. A second is a 422, so the link becomes
+               a statement rather than letting somebody fill the form in and be refused at
+               the end of it. `hasOpenVisit` is empty for anyone signed out, which is right:
+               browsing does not need to know. -->
+          @if (hasOpenVisit(listing.id)) {
+            <p class="action-open-visit" data-smoke="visit-already-open">
+              You already have a visit request open on this room.
+              <a routerLink="/visits">See your visits</a>
+            </p>
+          } @else {
+            <a class="action-primary" [routerLink]="['/property', listing.id, 'visit']">
+              Request a visit
+            </a>
+          }
 
           @if (canStartThread()) {
             <app-button
@@ -245,6 +262,36 @@
           >
             {{ isSaved(listing.id) ? 'Saved' : 'Save this room' }}
           </app-button>
+
+          <!-- The second way into the compare page: pick rooms one at a time while reading
+               them properly, rather than only by ticking a grid. Disabled at three, and the
+               link out only appears once there is something to compare. -->
+          <app-button
+            variant="outline"
+            [fullWidth]="true"
+            [pressed]="compare.has(listing.id)"
+            [disabled]="compare.full() && !compare.has(listing.id)"
+            (clicked)="compare.toggle(listing.id)"
+          >
+            @if (compare.has(listing.id)) {
+              Comparing this room
+            } @else if (compare.full()) {
+              Comparing three already
+            } @else {
+              Add to compare
+            }
+          </app-button>
+
+          @if (compare.count() > 0) {
+            <a
+              class="action-compare"
+              routerLink="/compare"
+              [queryParams]="{ ids: compare.query() }"
+              data-smoke="detail-compare-link"
+            >
+              Compare {{ compare.count() }} of {{ compare.limit }}
+            </a>
+          }
 
           <button type="button" class="action-report" (click)="reportOpen.set(true)">
             Report this listing

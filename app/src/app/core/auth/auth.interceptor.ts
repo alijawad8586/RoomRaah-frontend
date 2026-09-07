@@ -45,7 +45,11 @@ export const authInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, ne
       }
 
       // 2. Handle 403 Forbidden for unverified accounts (Brief §1.3 & §10.2)
-      if (error.status === 403 && isApiRequest) {
+      // Only a refused *write* means "go and verify". Rule 2 is that an unverified account
+      // may browse but not act, and a read answers 403 too - the shortlist prime that every
+      // public page fires is one. Redirecting on that dragged an unverified account off the
+      // landing page, off search and off every listing, which is the opposite of the rule.
+      if (error.status === 403 && isApiRequest && req.method !== 'GET') {
         if (!authService.isEmailVerified()) {
           router.navigate(['/verify']);
         }

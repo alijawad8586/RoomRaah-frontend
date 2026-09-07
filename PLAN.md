@@ -65,8 +65,39 @@ not a status report and reading it to find out is the slow way.
 | G | Messages (hub + polling fallback) + profile | 16 17 | 45m | yes |
 | H | Map view; responsive pass at four breakpoints; accessibility pass; final verify | 09 | 40m | yes |
 
-Final green run: guard clean, production build 364.90 kB initial, 126 unit tests passing,
-and 41/41 live smoke steps passing. `npm run verify` remains the check.
+| I | Audit pass: four things a route sweep found after the build read as done | — | 45m | yes |
+
+Final green run: guard clean, production build 366.23 kB initial, 130 unit tests passing,
+and 45/45 live smoke steps passing. `npm run verify` remains the check.
+
+### 3.1 What the audit pass found, and why the walk had missed it
+
+Once every slice was marked done, a second script swept **every route as every role** —
+anonymous, seeker, unverified seeker, owner, admin — watching for console errors, refused
+requests, empty renders, slow pages and pages reachable only by typing a URL. That is a
+different question from the one `tools/smoke.mjs` asks, which is whether the demo path
+works, and it found four things the demo path never touches:
+
+1. **An unverified account could not browse at all.** Every public page primes the
+   shortlist, `GET /saved` answers 403 to an unverified account, and the interceptor treated
+   *every* 403 as "go and verify" — so the landing page, search and every listing bounced
+   straight to `/verify`. Brief §1.3 and rule 2 say the opposite, and the brief seeds an
+   unverified account for a judge to try. Fixed in both places: the interceptor only
+   redirects on a refused **write**, and the shortlist is not primed for an account that has
+   none. `unverified-can-still-browse` walks it now.
+2. **Compare had no way in.** The page worked, but its only link was on the shortlist, so
+   anybody not signed in never saw the feature at all. `CompareStore` holds the selection,
+   search cards carry a tick, a bar appears once something is chosen, and a listing has "Add
+   to compare". Rule 11's cap of three is now visible rather than only enforced.
+3. **The reviews page was unreachable by clicking.** Its only link was gated on "more
+   reviews than are already shown", which on this data is never true.
+4. **Rule 7 was left to the server.** A seeker holding an open request could open the form
+   again and be refused at the end of it. The listing says so up front now, off a primed
+   `/visits/my` — Seeker only, because that endpoint answers 403 to everybody else and an
+   unasked-for 403 is a console error on a page that is working.
+
+The lesson worth keeping: a walk that follows the happy path proves the happy path. It
+cannot tell you a page is unreachable, because it goes there directly.
 
 ## 4. How the slices were run
 

@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BadgeComponent, ButtonComponent } from '../../shared/components';
 import { ReportDialogComponent } from './report-dialog.component';
 import { AuthService } from '../../core/auth/auth.service';
+import { CompareStore } from '../../core/services/compare.store';
 import { EngagementService } from '../../core/services/engagement.service';
 import { MessagingService } from '../../core/services/messaging.service';
 import { PropertyService } from '../../core/services/property.service';
@@ -47,6 +48,8 @@ export class PropertyDetailComponent {
   private readonly messaging = inject(MessagingService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  /** Public: the template both reads the selection and adds this room to it. */
+  readonly compare = inject(CompareStore);
 
   readonly listing = signal<PropertyDetail | null>(null);
   readonly loading = signal(true);
@@ -87,8 +90,10 @@ export class PropertyDetailComponent {
   });
 
   constructor() {
-    // So the save button knows which way round it is before anybody presses it.
+    // So the save button knows which way round it is before anybody presses it, and the
+    // visit button knows whether this person already has a request open on this room.
     this.engagement.primeShortlist();
+    this.engagement.primeOpenVisits();
 
     this.route.paramMap.subscribe((params) => {
       const id = Number(params.get('id'));
@@ -150,6 +155,10 @@ export class PropertyDetailComponent {
 
   isSaved(id: number): boolean {
     return this.engagement.isSaved(id);
+  }
+
+  hasOpenVisit(id: number): boolean {
+    return this.engagement.hasOpenVisit(id);
   }
 
   toggleSave(id: number): void {

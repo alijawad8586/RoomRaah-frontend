@@ -120,6 +120,29 @@
         }
       </div>
 
+      <!-- Compare tick. A label wrapping the input rather than a styled button, because
+           choosing several of a list is what a checkbox is, and screen readers already
+           know how to say it. -->
+      @if (comparable) {
+        <label class="card-compare" [class.is-disabled]="compareDisabled">
+          <input
+            type="checkbox"
+            class="card-compare-input"
+            data-smoke="compare-tick"
+            [checked]="isCompared"
+            [disabled]="compareDisabled"
+            (change)="onCompareChange()"
+          />
+          <span class="card-compare-text">
+            @if (compareDisabled) {
+              Comparing three already
+            } @else {
+              Compare
+            }
+          </span>
+        </label>
+      }
+
       <!-- Footer: Rent & Action -->
       <div class="card-footer">
         <div class="price-block">

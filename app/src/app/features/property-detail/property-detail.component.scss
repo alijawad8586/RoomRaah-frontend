@@ -412,3 +412,22 @@
   font-size: 0.85rem;
   color: #b91c1c;
 }
+
+// Sits under the compare button and only exists once a room is chosen, so it reads as the
+// next step rather than as another action competing with the two above it.
+.action-compare {
+  justify-self: center;
+  text-decoration: underline;
+}
+
+// Replaces the visit link when one is already open, so it keeps the same footprint in the
+// action card rather than the card jumping about.
+.action-open-visit {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background: #f8fafc;
+  font-size: 0.9rem;
+  text-align: center;
+}

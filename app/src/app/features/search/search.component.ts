@@ -13,6 +13,7 @@ import {
 import { PropertyService } from '../../core/services/property.service';
 import { ReferenceService } from '../../core/services/reference.service';
 import { EngagementService } from '../../core/services/engagement.service';
+import { CompareStore } from '../../core/services/compare.store';
 import { toFailure } from '../../core/http/api-error';
 import {
   Area,
@@ -61,6 +62,8 @@ export class SearchComponent {
   private readonly properties = inject(PropertyService);
   private readonly reference = inject(ReferenceService);
   private readonly engagement = inject(EngagementService);
+  /** Public: the template ticks rooms and reads the count straight off it. */
+  readonly compare = inject(CompareStore);
 
   readonly roomTypes = ROOM_TYPES;
   readonly genderPolicies = GENDER_POLICIES;

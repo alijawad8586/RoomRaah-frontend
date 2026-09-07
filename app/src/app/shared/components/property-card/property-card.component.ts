@@ -16,8 +16,14 @@ export class PropertyCardComponent {
   @Input() property: PropertyCardItem | null = null;
   @Input() loading: boolean = false;
   @Input() isSaved: boolean = false;
+  /** Off by default: only the lists that can start a comparison turn the control on. */
+  @Input() comparable: boolean = false;
+  @Input() isCompared: boolean = false;
+  /** True once three are chosen, so rule 11's cap is visible and not only enforced. */
+  @Input() compareFull: boolean = false;
 
   @Output() saveToggled = new EventEmitter<number>();
+  @Output() compareToggled = new EventEmitter<number>();
 
   imageLoaded: boolean = false;
   imageFailed: boolean = false;
@@ -36,6 +42,17 @@ export class PropertyCardComponent {
     if (this.property) {
       this.saveToggled.emit(this.property.id);
     }
+  }
+
+  onCompareChange(): void {
+    if (this.property) {
+      this.compareToggled.emit(this.property.id);
+    }
+  }
+
+  /** At the cap, the rooms already chosen stay tickable so one can be swapped out. */
+  get compareDisabled(): boolean {
+    return this.compareFull && !this.isCompared;
   }
 
   get formattedRent(): string {

@@ -364,3 +364,49 @@ Slice H, page 09, and the final product-wide interface pass.
 
 Final `npm run verify`: contact/stack guards clean, production build clean at 364.90 kB
 initial, **126 unit tests**, and **41/41 live smoke steps**. All frontend slices are complete.
+
+---
+
+## Frontend — the audit pass (2026-09-07, 22:10)
+
+Every slice was already marked done and `npm run verify` was green at 41/41. A second,
+separate script was then written to ask a different question: it swept **every route as
+every role** — anonymous, seeker, unverified seeker, owner, admin, about ninety page loads —
+watching each one for console errors, refused requests, empty renders, pages still spinning
+after the network settled, owner-contact leaks and anything slower than four seconds. It
+also built the link graph each role can actually click, so a page reachable only by typing
+its URL shows up as what it is.
+
+The smoke walk had missed all four of the things it found, and for one reason: a walk that
+follows the happy path proves the happy path. It cannot notice that a page is unreachable,
+because it navigates there directly.
+
+- **An unverified account could not browse at all.** The landing page, search and every
+  listing prime the shortlist; `GET /saved` answers 403 to an unverified account; and the
+  interceptor treated every 403 as "go and verify". The result was an account that got
+  dragged to `/verify` from every public page it opened — the exact opposite of brief §1.3
+  and rule 2, on the account the brief seeds for a judge to try. The interceptor now
+  redirects only on a refused **write**, and the shortlist is not primed for an account that
+  cannot have one.
+- **Compare had no way in.** Page 13 worked and was covered by three smoke steps, all of
+  which opened it by URL. Its only link in the whole interface was on the shortlist, behind
+  sign-in and behind having saved two rooms, and it chose the first three for you. There is
+  now a `CompareStore` holding the selection, a tick on every search card, a bar that
+  appears once something is chosen, and an "Add to compare" on the listing itself. Rule 11's
+  cap of three is visible in the interface rather than only enforced in the URL parser.
+- **The reviews page could not be reached by clicking.** Its only link appeared when there
+  were more reviews than the listing already showed, which on this data is never.
+- **Rule 7 was left to the server.** A seeker with an open request on a listing could open
+  the form and be refused at the end of it. The listing now says so first, from a primed
+  `/visits/my` — Seeker only, because that endpoint answers 403 to an owner or an admin and
+  an unasked-for 403 is a console error on a page that is working perfectly. That regression
+  was caught by re-running the sweep after the fix, which is the point of having it.
+
+Four new smoke steps were added in the same commit — `compare-picked-from-search`,
+`reviews-page-is-linked-from-a-listing`, `a-room-you-already-asked-to-visit-says-so` (which
+creates its own open request and cancels it again, so it behaves the same on every run) and
+`unverified-can-still-browse`.
+
+Final `npm run verify`: guards clean, production build clean at 366.23 kB initial (+1.33 kB),
+**130 unit tests**, **45/45 live smoke steps**. The independent sweep reports zero findings
+across every route for every role.

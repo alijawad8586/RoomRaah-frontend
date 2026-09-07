@@ -276,7 +276,11 @@
             <app-property-card
               [property]="property"
               [isSaved]="isSaved(property.id)"
+              [comparable]="true"
+              [isCompared]="compare.has(property.id)"
+              [compareFull]="compare.full()"
               (saveToggled)="toggleSave($event)"
+              (compareToggled)="compare.toggle($event)"
             />
           }
         </div>
@@ -307,4 +311,24 @@
       }
     </section>
   </div>
+
+  <!-- The way into the compare page. It only exists once something is ticked, which is
+       also what tells somebody that ticking did anything at all. -->
+  @if (compare.count() > 0) {
+    <div class="compare-bar" role="region" aria-label="Rooms chosen to compare" data-smoke="compare-bar">
+      <p class="compare-bar-count">
+        {{ compare.count() }} of {{ compare.limit }} chosen
+      </p>
+      <div class="compare-bar-actions">
+        <button type="button" class="compare-bar-clear" (click)="compare.clear()">Clear</button>
+        <a
+          class="compare-bar-go"
+          routerLink="/compare"
+          [queryParams]="{ ids: compare.query() }"
+        >
+          Compare {{ compare.count() === 1 ? 'this room' : 'these rooms' }}
+        </a>
+      </div>
+    </div>
+  }
 </div>

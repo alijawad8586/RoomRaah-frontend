@@ -222,6 +222,43 @@ export const WALK = [
     expect: [{ sel: '[data-smoke=compare-table]' }],
   },
   {
+    // The other half of compare, and the half that was missing: choosing the rooms. A page
+    // whose only way in is a URL somebody has to type is a page nobody in a demo ever sees,
+    // so this walks the route a person actually takes - tick two, press the bar.
+    name: 'compare-picked-from-search',
+    goto: '/search',
+    do: async (page) => {
+      const ticks = page.locator('[data-smoke=compare-tick]');
+      await ticks.first().waitFor({ timeout: 15000 });
+      await ticks.nth(0).check();
+      await ticks.nth(1).check();
+      await page.waitForSelector('[data-smoke=compare-bar]', { timeout: 5000 });
+      await page.getByRole('link', { name: /compare these rooms/i }).click();
+      await page.waitForSelector('[data-smoke=compare-table]', { timeout: 15000 });
+
+      const columns = await page.getByRole('button', { name: /^remove$/i }).count();
+      if (columns !== 2) {
+        throw new Error('compared ' + columns + ' rooms, expected the 2 that were ticked');
+      }
+
+      // Left ticked, the selection would follow the browser into every later step.
+      await page.goto(APP + '/search', { waitUntil: 'networkidle' });
+      await page.getByRole('button', { name: /^clear$/i }).click();
+    },
+  },
+  {
+    // The reviews page is one of the twenty and has to be reachable by clicking. Its only
+    // link used to appear when more reviews existed than the listing already showed, which
+    // on this data is never - so the page existed and nobody could get to it.
+    name: 'reviews-page-is-linked-from-a-listing',
+    goto: '/property/1',
+    do: async (page) => {
+      await page.getByRole('link', { name: /read (all|the)/i }).first().click();
+      await page.waitForURL((u) => u.pathname.endsWith('/reviews'), { timeout: 15000 });
+    },
+    expect: ['Reviews'],
+  },
+  {
     name: 'saved-needs-an-account',
     goto: '/saved',
     do: async (page) => {
@@ -498,6 +535,55 @@ export const WALK = [
     goto: '/admin/listings',
     do: async (page) => {
       await page.waitForURL((u) => !u.pathname.startsWith('/admin'), { timeout: 10000 });
+    },
+  },
+  {
+    // Rule 7: one open request per listing, and a second is a 422. The listing has to say
+    // so before somebody fills in the form, so the seeker's own open request is followed
+    // back to the room it is for.
+    name: 'a-room-you-already-asked-to-visit-says-so',
+    as: 'seeker',
+    goto: '/property/4/visit',
+    // The step makes its own open request rather than relying on one in the seed: the seeded
+    // open ones get answered and cancelled by other steps, and a walk that only passes on
+    // Tuesday is worse than no walk. It cancels what it made, so a second run behaves the
+    // same as the first.
+    do: async (page) => {
+      const when = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+      when.setHours(11, 0, 0, 0);
+      const local = new Date(when.getTime() - when.getTimezoneOffset() * 60000)
+        .toISOString()
+        .slice(0, 16);
+      await page.fill('input[type=datetime-local]', local);
+      await page.getByRole('button', { name: /send the request/i }).click();
+      await page.waitForSelector('[data-smoke=visit-created]', { timeout: 20000 });
+
+      await page.goto(APP + '/property/4', { waitUntil: 'networkidle' });
+      await page.waitForSelector('[data-smoke=visit-already-open]', { timeout: 15000 });
+      if ((await page.getByRole('link', { name: /^request a visit$/i }).count()) > 0) {
+        throw new Error('the listing still offers a second request');
+      }
+
+      await page.goto(APP + '/visits', { waitUntil: 'networkidle' });
+      await page.getByRole('button', { name: /cancel request/i }).first().click();
+      await page.waitForTimeout(1500);
+    },
+  },
+  {
+    // Rule 2 and brief 1.3: an unverified account may browse but not act. It used to be
+    // dragged to /verify from the landing page, from search and from every listing,
+    // because the shortlist prime answers 403 and every 403 was treated as "go and verify".
+    name: 'unverified-can-still-browse',
+    as: 'unverified',
+    goto: '/search',
+    do: async (page) => {
+      await page.waitForSelector('[data-smoke=results]', { timeout: 20000 });
+      for (const path of ['/', '/property/4']) {
+        await page.goto(APP + path, { waitUntil: 'networkidle', timeout: 30000 });
+        await page.waitForTimeout(600);
+        const landed = new URL(page.url()).pathname;
+        if (landed !== path) throw new Error(path + ' bounced an unverified account to ' + landed);
+      }
     },
   },
 ];

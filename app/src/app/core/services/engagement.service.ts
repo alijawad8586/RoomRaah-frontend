@@ -13,6 +13,7 @@ import {
   MyReview,
   SavedListing,
   VisitRequest,
+  isOpenVisit,
 } from '../models/engagement.model';
 import { AuthService } from '../auth/auth.service';
 
@@ -36,6 +37,9 @@ export class EngagementService {
   private readonly savedIds = signal<ReadonlySet<number>>(new Set());
   private loadedFor: number | null = null;
 
+  private readonly openVisitIds = signal<ReadonlySet<number>>(new Set());
+  private visitsLoadedFor: number | null = null;
+
   readonly savedCount = computed(() => this.savedIds().size);
 
   isSaved(propertyId: number): boolean {
@@ -46,10 +50,14 @@ export class EngagementService {
    * Called by the screens that draw save buttons. Signed out, the shortlist is empty rather
    * than an error: browsing is public, and a 401 fired on every landing page visit would be
    * noise in the console and nothing else.
+   *
+   * An unverified account is the same case for a stronger reason: it has no shortlist to
+   * read, the API answers 403, and firing it on every public page is how an unverified
+   * account ended up bounced to /verify the moment it opened the landing page.
    */
   primeShortlist(): void {
     const user = this.auth.currentUser();
-    if (!user || !this.auth.isAuthenticated()) {
+    if (!user || !this.auth.isAuthenticated() || !this.auth.isEmailVerified()) {
       this.savedIds.set(new Set());
       this.loadedFor = null;
       return;
@@ -62,6 +70,45 @@ export class EngagementService {
       .subscribe((page) => {
         if (!page) return;
         this.savedIds.set(new Set(page.items.map((item) => item.id)));
+      });
+  }
+
+  hasOpenVisit(propertyId: number): boolean {
+    return this.openVisitIds().has(propertyId);
+  }
+
+  /**
+   * Rule 7: a seeker may hold one open request per listing, and a second is a 422. The
+   * listing itself does not say whether this person already has one - the API only tells
+   * them through their own visit list - so it is read once and kept, the same way the
+   * shortlist is, and the button is disabled rather than letting somebody write out a
+   * request and be refused at the end of it.
+   */
+  primeOpenVisits(): void {
+    const user = this.auth.currentUser();
+    // Seeker only, and not just because the button is theirs: `/visits/my` answers 403 to an
+    // owner or an admin reading the same listing page, and an unasked-for 403 is a console
+    // error on a page that is working perfectly.
+    if (
+      !user ||
+      !this.auth.isAuthenticated() ||
+      !this.auth.isEmailVerified() ||
+      this.auth.userRole() !== 'Seeker'
+    ) {
+      this.openVisitIds.set(new Set());
+      this.visitsLoadedFor = null;
+      return;
+    }
+    if (this.visitsLoadedFor === user.id) return;
+    this.visitsLoadedFor = user.id;
+
+    this.myVisits(1, 50)
+      .pipe(catchError(() => of(null)))
+      .subscribe((page) => {
+        if (!page) return;
+        this.openVisitIds.set(
+          new Set(page.items.filter(isOpenVisit).map((visit) => visit.propertyId)),
+        );
       });
   }
 
@@ -129,8 +176,17 @@ export class EngagementService {
     this.savedIds.set(next);
   }
 
+  private markOpenVisit(propertyId: number, open: boolean): void {
+    const next = new Set(this.openVisitIds());
+    if (open) next.add(propertyId);
+    else next.delete(propertyId);
+    this.openVisitIds.set(next);
+  }
+
   requestVisit(payload: CreateVisitRequest): Observable<VisitRequest> {
-    return this.http.post<VisitRequest>(`${this.base}/visits`, payload);
+    return this.http
+      .post<VisitRequest>(`${this.base}/visits`, payload)
+      .pipe(tap((visit) => this.markOpenVisit(visit.propertyId, true)));
   }
 
   myVisits(page = 1, pageSize = 20): Observable<Page<VisitRequest>> {
@@ -140,7 +196,9 @@ export class EngagementService {
   }
 
   cancelVisit(id: number): Observable<VisitRequest> {
-    return this.http.patch<VisitRequest>(`${this.base}/visits/${id}/cancel`, {});
+    return this.http
+      .patch<VisitRequest>(`${this.base}/visits/${id}/cancel`, {})
+      .pipe(tap((visit) => this.markOpenVisit(visit.propertyId, false)));
   }
 
   /** Either party may press this, and only after `preferredAt` has passed. */
