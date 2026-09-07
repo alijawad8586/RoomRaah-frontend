@@ -35,6 +35,9 @@ export class CompareComponent {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
 
+  /** Carried in the query string from the search that produced the shortlist. */
+  readonly landmarkId = signal<number | undefined>(undefined);
+
   private readonly ids = toSignal(
     this.route.queryParams.pipe(map((params) => readIds(params['ids']))),
     { initialValue: [] as number[] },
@@ -66,7 +69,11 @@ export class CompareComponent {
   ];
 
   constructor() {
-    this.route.queryParams.subscribe((params) => this.load(readIds(params['ids'])));
+    this.route.queryParams.subscribe((params) => {
+      const landmark = Number(params['landmarkId']);
+      this.landmarkId.set(Number.isFinite(landmark) && landmark > 0 ? landmark : undefined);
+      this.load(readIds(params['ids']));
+    });
   }
 
   private load(ids: number[]): void {
@@ -79,7 +86,7 @@ export class CompareComponent {
     this.loading.set(true);
     this.error.set(null);
 
-    this.properties.compare(ids).subscribe({
+    this.properties.compare(ids, this.landmarkId()).subscribe({
       next: (list) => {
         this.listings.set(list ?? []);
         this.loading.set(false);
@@ -94,7 +101,7 @@ export class CompareComponent {
   remove(id: number): void {
     const next = this.ids().filter((value) => value !== id);
     this.router.navigate(['/compare'], {
-      queryParams: { ids: next.length ? next.join(',') : null },
+      queryParams: { ids: next.length ? next.join(',') : null, landmarkId: this.landmarkId() ?? null },
     });
   }
 }

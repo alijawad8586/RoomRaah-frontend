@@ -154,6 +154,75 @@ export const WALK = [
     expect: [{ sel: '[data-smoke=search-error]' }],
   },
   {
+    // Distances are computed and shown whenever a place is chosen. What this guards is that
+    // choosing one actually reorders the list - a nearby room listed under a room 1000km
+    // away reads as 'distance is broken' even though every number on the page is right.
+    name: 'choosing-a-place-sorts-by-distance-and-can-filter-by-it',
+    goto: '/search',
+    do: async (page) => {
+      await page.locator('#place-search').fill('Punjab');
+      await page.locator('[role=option]').first().click({ timeout: 15000 });
+      await page.waitForFunction(() => location.search.includes('landmarkId='), { timeout: 15000 });
+
+      if (!page.url().includes('sort=Distance')) {
+        throw new Error('choosing a place did not sort by distance: ' + page.url());
+      }
+
+      // The re-fetch lands after the query string does, so wait for a rendered distance
+      // rather than counting the cards that were on screen before the place was chosen.
+      await page.waitForFunction(
+        () => /[\d.]+ km \(straight-line\)/.test(document.body.innerText),
+        { timeout: 20000 },
+      );
+
+      const order = await page.$$eval('[data-smoke=result-card], article', (cards) =>
+        cards
+          .map((card) => Number((card.innerText.match(/([\d.]+) km/) || [])[1]))
+          .filter(Number.isFinite),
+      );
+      if (order.length < 2) throw new Error('only ' + order.length + ' cards carried a distance');
+      const sorted = [...order].sort((a, b) => a - b);
+      if (order.join() !== sorted.join()) {
+        throw new Error('results were not nearest-first: ' + order.join(', '));
+      }
+
+      // Within 5km must actually drop the far ones rather than only relabel them.
+      const before = order.length;
+      await page.selectOption('select[aria-label="Maximum straight-line distance"]', '5');
+      await page.waitForFunction(() => location.search.includes('maxDistanceKm=5'), { timeout: 15000 });
+      await page.waitForTimeout(2000);
+      const after = await page.locator('[data-smoke=result-card], article').count();
+      if (!(after > 0 && after < before)) {
+        throw new Error('the 5km filter returned ' + after + ' of ' + before + ' rooms');
+      }
+    },
+  },
+  {
+    // The Distance row used to be a permanent dash: compare never carried the place.
+    name: 'compare-keeps-the-chosen-place',
+    goto: '/search?landmarkId=1&sort=Distance',
+    do: async (page) => {
+      const ticks = page.locator('[data-smoke=compare-tick]');
+      await ticks.first().waitFor({ timeout: 15000 });
+      await ticks.nth(0).check();
+      await ticks.nth(1).check();
+      try {
+        await page.getByRole('link', { name: /compare these rooms/i }).click();
+        await page.waitForSelector('[data-smoke=compare-table]', { timeout: 15000 });
+        await page.waitForFunction(
+          () => /[\d.]+ km \(straight-line\)/.test(document.body.innerText),
+          { timeout: 20000 },
+        );
+      } finally {
+        // Whatever happened, the selection must not follow the browser into later steps -
+        // it caps at three and a full basket disables every remaining tick.
+        await page.goto(APP + '/search', { waitUntil: 'networkidle' });
+        const clear = page.getByRole('button', { name: /^clear$/i });
+        if (await clear.count()) await clear.click();
+      }
+    },
+  },
+  {
     // No place chosen is not a dead map: it draws every matching room and offers the landmark
     // as the thing that adds distances. A judge who clicks "Map view" first sees a map.
     name: 'map-search-without-a-place-still-draws-the-map',

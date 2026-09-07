@@ -52,11 +52,13 @@ export class PropertyService {
    * is a 422 and the interface is supposed to have stopped that happening. An id that
    * resolves to nothing is quietly left out by the server rather than refusing the lot.
    */
-  compare(ids: number[]): Observable<PropertyCard[]> {
+  compare(ids: number[], landmarkId?: number): Observable<PropertyCard[]> {
     const wanted = [...new Set(ids)].slice(0, COMPARE_LIMIT);
-    return this.http.get<PropertyCard[]>(`${this.base}/properties/compare`, {
-      params: new HttpParams().set('ids', wanted.join(',')),
-    });
+    let params = new HttpParams().set('ids', wanted.join(','));
+    // The Distance row is otherwise a permanent dash: the server only measures against a
+    // place, and the person carried one here from the search they were comparing out of.
+    if (landmarkId != null) params = params.set('landmarkId', landmarkId);
+    return this.http.get<PropertyCard[]>(`${this.base}/properties/compare`, { params });
   }
 }
 

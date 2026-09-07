@@ -67,6 +67,7 @@ not a status report and reading it to find out is the slow way.
 
 | I | Audit pass: four things a route sweep found after the build read as done | — | 45m | yes |
 | J | Map view without a landmark draws the map instead of a signpost | 09 | — | yes |
+| K | Distance: nearest-first on pick, and compare carries the place | 07 13 | — | yes |
 
 Final green run: guard clean, production build 366.23 kB initial, 130 unit tests passing,
 and 45/45 live smoke steps passing. `npm run verify` remains the check.

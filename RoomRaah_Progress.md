@@ -444,3 +444,39 @@ list rows. `npm run verify` green — guard clean, production build clean, unit 
 The lesson is the same shape as the audit pass's: the walk asserted the signpost, so the
 signpost was "working". Nothing asked whether the page a button leads to does the thing the
 button is named after.
+
+---
+
+## Frontend — distance was measured but never acted on (2026-09-07)
+
+Reported as "distance calculate nahi ho raha". It was: the API returns `distanceKm` for
+every card as soon as a `landmarkId` is sent, the seed data has real coordinates
+(`/properties?landmarkId=1` answers 2.9, 3.9, 6.2 km for the three Lahore rooms), and both
+the card and the map list already printed it. Nothing needed adding to the seed.
+
+What was actually wrong is that nothing *used* the number.
+
+- **Choosing a place did not reorder anything.** `chooseSuggestion` set `landmarkId` and left
+  `sort` alone, so it stayed `Recent`. Picking "University of the Punjab" put a Karachi room
+  at 1018 km above a Lahore room at 2.9 km — every figure on the page correct, and the page
+  still reading as though distance were ignored. Choosing a landmark now defaults the sort to
+  `Distance`, and only when nobody has already chosen a different order. `clearLandmark`
+  already dropped the sort again, so the pair stays consistent.
+- **Compare never carried the place.** `/properties/compare` accepts `landmarkId` and returns
+  distances with it, but the service never sent one, so the Distance row was a permanent "—"
+  even when the person had arrived straight from a search that had a place. The compare bar
+  now carries `landmarkId` in its link, the page reads it, `compare()` forwards it, and
+  removing a column keeps it.
+
+Untouched on purpose: `/properties/{id}` ignores `landmarkId` server-side and returns
+`distanceKm: null`, so the listing page's distance line stays hidden. That is the server's
+shape and the backend is read-only.
+
+Two new smoke steps, because the old walk asserted the *label* and never the *order*:
+`choosing-a-place-sorts-by-distance-and-can-filter-by-it` (URL gains `sort=Distance`, the
+rendered kilometres are ascending, and "Within 5 km" cuts 8 rooms to 2) and
+`compare-keeps-the-chosen-place`. The second clears its selection in a `finally`, because a
+compare basket left full disables every tick in the steps that follow.
+
+`npm run verify` green: guard clean, production build clean, unit tests passing, **47/47**
+live smoke steps.

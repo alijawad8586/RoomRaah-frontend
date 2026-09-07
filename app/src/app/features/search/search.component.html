@@ -324,7 +324,7 @@
         <a
           class="compare-bar-go"
           routerLink="/compare"
-          [queryParams]="{ ids: compare.query() }"
+          [queryParams]="{ ids: compare.query(), landmarkId: filters().landmarkId ?? null }"
         >
           Compare {{ compare.count() === 1 ? 'this room' : 'these rooms' }}
         </a>

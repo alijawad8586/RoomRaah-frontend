@@ -221,7 +221,10 @@ export class SearchComponent {
     this.landmarkLabel.set(suggestion.name);
 
     if (suggestion.type === 'Landmark') {
-      this.apply({ landmarkId: suggestion.id });
+      // Picking a place is a request to see what is near it, so the nearest room comes
+      // first unless somebody has already chosen a different order. Without this the
+      // distances are all computed and shown, and the list still reads as ignoring them.
+      this.apply({ landmarkId: suggestion.id, sort: this.filters().sort ?? 'Distance' });
       return;
     }
     if (suggestion.type === 'City') {
