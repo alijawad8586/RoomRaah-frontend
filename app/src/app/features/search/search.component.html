@@ -51,6 +51,14 @@
         }
       </button>
 
+      <a
+        class="map-view-link"
+        routerLink="/search/map"
+        [queryParams]="mapQuery()"
+      >
+        Map view
+      </a>
+
       <label class="sort-control">
         <span class="sort-label">Sort</span>
         <select

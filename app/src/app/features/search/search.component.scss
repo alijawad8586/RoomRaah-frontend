@@ -142,8 +142,8 @@
     @include focus-visible;
   }
 
-  // From tablet up the panel is always shown, so the control that opens it goes away.
-  @include tablet-up {
+  // Phone and tablet both collapse the filters; laptop up gets the persistent sidebar.
+  @include laptop-up {
     display: none;
   }
 }
@@ -152,6 +152,26 @@
   display: inline-flex;
   align-items: center;
   gap: $space-2;
+}
+
+.map-view-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: $space-2 $space-4;
+  border: 1px solid $color-navy;
+  border-radius: $radius-md;
+  color: $color-navy;
+  font-weight: $font-weight-semibold;
+  text-decoration: none;
+
+  &:hover {
+    background: $color-navy-light;
+  }
+
+  &:focus-visible {
+    @include focus-visible;
+  }
 }
 
 .sort-label {
@@ -203,6 +223,15 @@
   border: 1px solid $color-slate-200;
   border-radius: $radius-lg;
 
+  // Tablet gets the brief's collapsible panel above its two-column result grid.
+  @include tablet {
+    display: none;
+
+    &.is-open {
+      display: flex;
+    }
+  }
+
   @include laptop-up {
     position: sticky;
     top: $space-4;
@@ -251,8 +280,8 @@
     @include focus-visible;
   }
 
-  // Only the slide-over needs dismissing.
-  @include tablet-up {
+  // Phone and tablet panels are collapsible; only the persistent sidebar has no close.
+  @include laptop-up {
     display: none;
   }
 }

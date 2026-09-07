@@ -1,7 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Params, Router } from '@angular/router';
+import { ActivatedRoute, Params, Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
 import {
@@ -50,6 +50,7 @@ import {
     ButtonComponent,
     BadgeComponent,
     EmptyStateComponent,
+    RouterLink,
   ],
   templateUrl: './search.component.html',
   styleUrls: ['./search.component.scss'],
@@ -90,6 +91,7 @@ export class SearchComponent {
   readonly lastPage = computed(() => Math.max(1, Math.ceil(this.total() / this.pageSize())));
   readonly hasFilters = computed(() => countActive(this.filters()) > 0);
   readonly activeCount = computed(() => countActive(this.filters()));
+  readonly mapQuery = computed(() => writeFilters(this.filters()));
 
   /** The skeleton count matches the page size so the grid does not jump when results land. */
   readonly skeletons = computed(() => Array.from({ length: this.pageSize() }));

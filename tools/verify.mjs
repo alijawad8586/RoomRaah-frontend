@@ -4,6 +4,7 @@
  *   npm run verify              all four gates
  *   npm run verify -- --fast    skip the browser walk (guard, build, unit tests only)
  *   npm run verify -- --smoke   only the browser walk, against whatever is already served
+ *   npm run verify -- --smoke --only=search   one named browser step while debugging
  *
  * The gates run cheapest-failure-first, and the run stops at the first one that fails:
  * there is no point walking a browser through an application that does not compile, and a
@@ -24,6 +25,7 @@ const URL = 'http://localhost:4200';
 const args = process.argv.slice(2);
 const fast = args.includes('--fast');
 const smokeOnly = args.includes('--smoke');
+const only = args.find((arg) => arg.startsWith('--only='));
 
 const node = process.execPath;
 
@@ -92,7 +94,9 @@ const gates = [
           return 1;
         }
       }
-      const code = await run(node, [join(ROOT, 'tools', 'smoke.mjs')], ROOT);
+      const smokeArgs = [join(ROOT, 'tools', 'smoke.mjs')];
+      if (only) smokeArgs.push(only);
+      const code = await run(node, smokeArgs, ROOT);
       if (server) server.kill();
       return code;
     },

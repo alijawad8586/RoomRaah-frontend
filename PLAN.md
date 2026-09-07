@@ -63,15 +63,15 @@ not a status report and reading it to find out is the slow way.
 | E | Owner dashboard + listing form, photo flow, revision states | 18 19 | 75m | yes |
 | F | Admin panel, five tabs | 20 | 60m | yes |
 | G | Messages (hub + polling fallback) + profile | 16 17 | 45m | yes |
-| H | Map view; responsive pass at four breakpoints; accessibility pass; final verify | 09 | 40m | no |
+| H | Map view; responsive pass at four breakpoints; accessibility pass; final verify | 09 | 40m | yes |
 
-Green as of the last commit: guard clean, production build clean, unit tests passing,
-smoke walk passing. `npm run verify` is the check — never a hand-clicked page.
+Final green run: guard clean, production build 364.90 kB initial, 126 unit tests passing,
+and 41/41 live smoke steps passing. `npm run verify` remains the check.
 
-## 4. How the remaining slices are run
+## 4. How the slices were run
 
-Slices land back to back, in the ledger's order. Times are budgets, not estimates — when
-one overruns, the scope inside it gets cut, not the clock, and the cut gets said out loud.
+Slices landed back to back in the ledger's order. Times were budgets, not estimates — when
+one overran, the scope inside it was cut, not the clock, and the cut was said out loud.
 
 ### Cut, deliberately, and what the user gets instead
 

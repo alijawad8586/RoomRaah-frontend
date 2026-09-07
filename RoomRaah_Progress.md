@@ -340,3 +340,27 @@ production build 362.96 kB initial, 126 unit tests, and **39/39 live smoke steps
 smoke walk includes the non-inspector permission case and waits for the final revision
 queue rather than accepting stale DOM from the previous filter.
 
+## Frontend - map, responsive and accessibility final pass (2026-09-07, 20:24)
+
+Slice H, page 09, and the final product-wide interface pass.
+
+- **`/search/map`.** Uses the existing search query string and calls the public property
+  search with the selected `landmarkId`. No place selected produces a useful route back to
+  search rather than a dead map. Up to 50 matching rooms render as Leaflet markers and as
+  an equivalent keyboard-accessible list; selecting a row moves to a street-level view.
+- **Four real breakpoints.** Phone is one column with fixed bottom navigation and a
+  full-height filter slide-over; tablet uses a two-column grid and collapsible filters;
+  laptop uses three columns with persistent filters; desktop is capped and gives the map
+  and list separate columns.
+- **Accessibility.** Global visible focus and reduced-motion behavior were added. The live
+  walk now rejects horizontal overflow, duplicate ids, missing image alternatives, unnamed
+  controls, unlabelled fields and pages without exactly one `h1`. It found and fixed the
+  not-found page's missing `h1`; its stale Home link also now goes home rather than to the
+  design-system route.
+- **Permanent verification.** Representative public, seeker, owner and admin screens are
+  resized across phone, tablet, laptop and desktop during every smoke run. Map screenshots
+  are saved at all four widths without tying selectors to CSS classes that a later visual
+  restyle may replace.
+
+Final `npm run verify`: contact/stack guards clean, production build clean at 364.90 kB
+initial, **126 unit tests**, and **41/41 live smoke steps**. All frontend slices are complete.

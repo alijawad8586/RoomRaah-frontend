@@ -30,6 +30,13 @@ const only = args.find((a) => a.startsWith('--only='))?.slice(7);
 const headed = args.includes('--headed');
 
 const PASSWORD = 'Password1';
+const DEFAULT_VIEWPORT = { width: 1280, height: 900 };
+const BREAKPOINT_VIEWPORTS = [
+  { name: 'phone', width: 390, height: 844 },
+  { name: 'tablet', width: 800, height: 1000 },
+  { name: 'laptop', width: 1280, height: 900 },
+  { name: 'desktop', width: 1600, height: 1000 },
+];
 
 export const ACCOUNTS = {
   seeker: 'seeker1@roomraah.local',
@@ -83,7 +90,53 @@ export const WALK = [
   {
     name: 'search',
     goto: '/search',
+    do: async (page) => {
+      const toggle = page.getByRole('button', { name: /^filters/i });
+      const panel = page.locator('#filter-panel');
+      const panelState = () => panel.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        const visibleWidth = Math.min(rect.right, innerWidth) - Math.max(rect.left, 0);
+        const style = getComputedStyle(element);
+        return {
+          exposed: style.display !== 'none' && visibleWidth > 2,
+          display: style.display,
+          transform: style.transform,
+          left: Math.round(rect.left),
+          right: Math.round(rect.right),
+          viewport: innerWidth,
+        };
+      });
+      const waitForExposure = (wanted) => page.waitForFunction((shouldBeExposed) => {
+        const element = document.querySelector('#filter-panel');
+        if (!element) return false;
+        const rect = element.getBoundingClientRect();
+        const visibleWidth = Math.min(rect.right, innerWidth) - Math.max(rect.left, 0);
+        const exposed = getComputedStyle(element).display !== 'none' && visibleWidth > 2;
+        return exposed === shouldBeExposed;
+      }, wanted, { timeout: 2500 });
+
+      for (const viewport of BREAKPOINT_VIEWPORTS) {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height });
+        if (viewport.width <= 1024) {
+          if (!(await toggle.isVisible())) throw new Error(`${viewport.name}: filter toggle is hidden`);
+          await waitForExposure(false);
+          const before = await panelState();
+          if (before.exposed) throw new Error(`${viewport.name}: filters start open ${JSON.stringify(before)}`);
+          await toggle.click();
+          await waitForExposure(true);
+          if (!(await panelState()).exposed) throw new Error(`${viewport.name}: filter panel did not open`);
+          await page.getByRole('button', { name: /close filters/i }).click();
+          await waitForExposure(false);
+        } else {
+          if (await toggle.isVisible()) throw new Error(`${viewport.name}: persistent filters still have a toggle`);
+          await waitForExposure(true);
+          if (!(await panelState()).exposed) throw new Error(`${viewport.name}: persistent filters are hidden`);
+        }
+      }
+      await page.setViewportSize(DEFAULT_VIEWPORT);
+    },
     expect: [{ sel: '[data-smoke=results] app-property-card' }],
+    viewports: BREAKPOINT_VIEWPORTS,
   },
   {
     // Filters live in the query string so a filtered search is shareable and Back works.
@@ -101,9 +154,38 @@ export const WALK = [
     expect: [{ sel: '[data-smoke=search-error]' }],
   },
   {
+    name: 'map-search-needs-a-place',
+    goto: '/search/map',
+    expect: [{ sel: '[data-smoke=map-needs-landmark]' }, { role: 'link', name: /choose a place/i }],
+  },
+  {
+    // Landmark 1 is University of the Punjab in the contract seed. The map calls the same
+    // public search endpoint, then supplies an equivalent list for keyboard-only use.
+    name: 'map-search-by-landmark',
+    goto: '/search/map?landmarkId=1&sort=Distance',
+    do: async (page) => {
+      await page.waitForSelector('[data-smoke=map-canvas].leaflet-container', { timeout: 15000 });
+      await page.waitForSelector('[data-smoke=map-listing]', { timeout: 15000 });
+      const locate = page.getByRole('button', { name: /show on map/i }).first();
+      await locate.click();
+      await page.waitForSelector('[data-smoke=map-locate][aria-pressed=true]', { timeout: 5000 });
+      if ((await locate.getAttribute('aria-pressed')) !== 'true') {
+        throw new Error('selecting a room did not select its map marker');
+      }
+    },
+    expect: [
+      { sel: '[data-smoke=map-canvas].leaflet-container' },
+      { sel: '[data-smoke=map-listing]' },
+      { role: 'link', name: /list view/i },
+    ],
+    viewports: BREAKPOINT_VIEWPORTS,
+    responsiveScreenshots: true,
+  },
+  {
     name: 'property-detail',
     goto: '/property/4',
     expect: ['About this room', 'What we checked', 'Listed by'],
+    viewports: BREAKPOINT_VIEWPORTS,
   },
   {
     name: 'property-photos',
@@ -249,6 +331,7 @@ export const WALK = [
       { role: 'heading', name: /^messages$/i },
       { sel: '[data-smoke=messages-layout], [data-smoke=messages-empty]' },
     ],
+    viewports: BREAKPOINT_VIEWPORTS,
   },
   {
     // A message must appear in the thread it was sent to, exactly once. Twice is the bug
@@ -290,6 +373,7 @@ export const WALK = [
       { role: 'link', name: /add a listing/i },
       'Visit requests',
     ],
+    viewports: BREAKPOINT_VIEWPORTS,
   },
   {
     // The whole point of the owner screens: a save on a published listing is a proposal, and
@@ -339,6 +423,7 @@ export const WALK = [
       { sel: '[data-smoke=admin-listing-detail]' },
       { role: 'button', name: /record check/i },
     ],
+    viewports: BREAKPOINT_VIEWPORTS,
   },
   {
     name: 'admin-revisions',
@@ -449,6 +534,72 @@ function describe(want) {
   return want.sel;
 }
 
+/** Cheap accessibility and responsive checks over the DOM the browser actually rendered. */
+async function auditRenderedPage(page) {
+  return page.evaluate(() => {
+    const issues = [];
+    const visible = (element) => {
+      const style = getComputedStyle(element);
+      return style.display !== 'none' && style.visibility !== 'hidden' && element.getClientRects().length > 0;
+    };
+    const accessibleName = (element) => {
+      const labelledBy = (element.getAttribute('aria-labelledby') ?? '')
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((id) => document.getElementById(id)?.textContent?.trim() ?? '')
+        .join(' ')
+        .trim();
+      return (
+        element.getAttribute('aria-label')?.trim() ||
+        labelledBy ||
+        element.getAttribute('title')?.trim() ||
+        element.textContent?.trim() ||
+        ''
+      );
+    };
+
+    const overflow = document.documentElement.scrollWidth - document.documentElement.clientWidth;
+    if (overflow > 2) issues.push(`horizontal overflow by ${overflow}px`);
+
+    const ids = new Map();
+    for (const element of document.querySelectorAll('[id]')) {
+      if (!element.id) continue;
+      ids.set(element.id, (ids.get(element.id) ?? 0) + 1);
+    }
+    for (const [id, count] of ids) {
+      if (count > 1) issues.push(`duplicate id #${id}`);
+    }
+
+    for (const image of document.querySelectorAll('img')) {
+      if (visible(image) && !image.hasAttribute('alt')) issues.push('visible image without alt text');
+    }
+
+    for (const control of document.querySelectorAll('button, a[href], [role="button"]')) {
+      if (visible(control) && !accessibleName(control)) {
+        issues.push(`${control.tagName.toLowerCase()} without an accessible name`);
+      }
+    }
+
+    if (document.querySelector('a button, button a, a [role="button"], button [role="link"]')) {
+      issues.push('nested interactive controls');
+    }
+
+    for (const field of document.querySelectorAll('input:not([type="hidden"]), select, textarea')) {
+      if (!visible(field)) continue;
+      const hasLabel =
+        field.closest('label') != null ||
+        (field.id && document.querySelector(`label[for="${CSS.escape(field.id)}"]`) != null) ||
+        accessibleName(field) !== '';
+      if (!hasLabel) issues.push(`${field.tagName.toLowerCase()} without a label`);
+    }
+
+    const headingCount = document.querySelectorAll('h1').length;
+    if (headingCount !== 1) issues.push(`expected one h1, found ${headingCount}`);
+
+    return [...new Set(issues)];
+  });
+}
+
 async function signIn(page, email) {
   await page.goto(APP + '/login', { waitUntil: 'networkidle' });
   await page.fill('input[type=email]', email);
@@ -473,7 +624,7 @@ async function run() {
   mkdirSync(SHOTS, { recursive: true });
 
   const browser = await chromium.launch({ channel: 'chrome', headless: !headed });
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const context = await browser.newContext({ viewport: DEFAULT_VIEWPORT });
   const page = await context.newPage();
 
   let problems = [];
@@ -510,6 +661,7 @@ async function run() {
     page.on('response', onResponse);
 
     try {
+      await page.setViewportSize(DEFAULT_VIEWPORT);
       if (step.as && signedInAs !== step.as) {
         await signIn(page, ACCOUNTS[step.as]);
         signedInAs = step.as;
@@ -540,6 +692,26 @@ async function run() {
       if (leak && !step.name.startsWith('admin-user')) {
         problems.push('owner-contact leak: ' + leak[0]);
       }
+
+      for (const issue of await auditRenderedPage(page)) {
+        problems.push('accessibility/layout: ' + issue);
+      }
+
+      for (const viewport of step.viewports ?? []) {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height });
+        await page.waitForTimeout(250);
+        for (const issue of await auditRenderedPage(page)) {
+          problems.push(`${viewport.name}: ${issue}`);
+        }
+        if (step.responsiveScreenshots) {
+          await page.screenshot({
+            path: join(SHOTS, `${step.name}-${viewport.name}.png`),
+            fullPage: true,
+          });
+        }
+      }
+
+      await page.setViewportSize(DEFAULT_VIEWPORT);
 
       if (!step.noScreenshot) {
         await page.screenshot({ path: join(SHOTS, step.name + '.png'), fullPage: true });

@@ -23,6 +23,12 @@ export const routes: Routes = [
     title: 'Design System — RoomRaah',
   },
   {
+    path: 'search/map',
+    loadComponent: () =>
+      import('./features/search/map-search.component').then((m) => m.MapSearchComponent),
+    title: 'Map search — RoomRaah',
+  },
+  {
     path: 'search',
     loadComponent: () =>
       import('./features/search/search.component').then((m) => m.SearchComponent),

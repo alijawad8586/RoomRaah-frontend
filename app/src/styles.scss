@@ -35,6 +35,25 @@
   @include container-centered;
 }
 
+// A component may refine this ring, but no native or generated control is allowed to lose
+// visible keyboard focus during the later visual restyle.
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid $color-navy;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgb(18 59 93 / 18%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 // Typography utilities
 .text-navy {
   color: $color-navy;
@@ -61,6 +80,27 @@
   border: 3px solid $color-surface;
   box-shadow: 0 2px 6px rgb(0 0 0 / 35%);
   cursor: grab;
+}
+
+.map-result-marker {
+  display: grid;
+  place-items: center;
+  border: 2px solid #fff;
+  border-radius: 9999px;
+  background: #123b5d;
+  box-shadow: 0 2px 8px rgb(15 23 42 / 35%);
+
+  span {
+    width: 8px;
+    height: 8px;
+    border-radius: inherit;
+    background: #fff;
+  }
+
+  &.is-selected {
+    background: #16a36a;
+    transform: scale(1.25);
+  }
 }
 
 .leaflet-container {
