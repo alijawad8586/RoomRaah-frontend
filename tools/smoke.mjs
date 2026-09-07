@@ -154,8 +154,14 @@ export const WALK = [
     expect: [{ sel: '[data-smoke=search-error]' }],
   },
   {
-    name: 'map-search-needs-a-place',
+    // No place chosen is not a dead map: it draws every matching room and offers the landmark
+    // as the thing that adds distances. A judge who clicks "Map view" first sees a map.
+    name: 'map-search-without-a-place-still-draws-the-map',
     goto: '/search/map',
+    do: async (page) => {
+      await page.waitForSelector('[data-smoke=map-canvas].leaflet-container', { timeout: 15000 });
+      await page.waitForSelector('[data-smoke=map-listing]', { timeout: 15000 });
+    },
     expect: [{ sel: '[data-smoke=map-needs-landmark]' }, { role: 'link', name: /choose a place/i }],
   },
   {

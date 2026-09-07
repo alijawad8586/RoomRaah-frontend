@@ -29,7 +29,7 @@ export class MapSearchComponent implements OnDestroy {
   readonly loading = signal(false);
   readonly error = signal<string | null>(null);
   readonly selectedId = signal<number | null>(null);
-  readonly needsLandmark = computed(() => this.filters().landmarkId == null);
+  readonly noLandmark = computed(() => this.filters().landmarkId == null);
   readonly listQuery = computed(() => writeFilters(this.filters()));
 
   private canvas?: ElementRef<HTMLElement>;
@@ -51,16 +51,6 @@ export class MapSearchComponent implements OnDestroy {
       const filters = readFilters(params);
       this.filters.set(filters);
       this.selectedId.set(null);
-
-      if (filters.landmarkId == null) {
-        this.loading.set(false);
-        this.error.set(null);
-        this.results.set([]);
-        this.total.set(0);
-        this.clearMarkers();
-        return;
-      }
-
       this.fetch(filters);
     });
   }
@@ -87,6 +77,7 @@ export class MapSearchComponent implements OnDestroy {
   }
 
   private fetch(filters: PropertyFilters): void {
+    const hasLandmark = filters.landmarkId != null;
     this.loading.set(true);
     this.error.set(null);
 
@@ -95,7 +86,10 @@ export class MapSearchComponent implements OnDestroy {
         ...filters,
         page: 1,
         pageSize: MAP_PAGE_SIZE,
-        sort: filters.sort ?? 'Distance',
+        // Distance sorting and a distance cap are both a 400 without a landmark, so the map
+        // falls back to the ordinary search when nobody has picked a place yet.
+        maxDistanceKm: hasLandmark ? filters.maxDistanceKm : undefined,
+        sort: hasLandmark ? filters.sort ?? 'Distance' : filters.sort,
       })
       .subscribe({
         next: (page) => {
@@ -118,7 +112,7 @@ export class MapSearchComponent implements OnDestroy {
   }
 
   private ensureMap(): void {
-    if (this.map || !this.canvas || this.needsLandmark()) return;
+    if (this.map || !this.canvas) return;
 
     this.map = L.map(this.canvas.nativeElement, {
       center: PAKISTAN_CENTRE,

@@ -2,18 +2,24 @@
   <header class="map-header">
     <div>
       <h1>Rooms on the map</h1>
-      <p>Distances are straight-line measurements from the place you selected.</p>
+      @if (noLandmark()) {
+        <p>Every published room that matches the search.</p>
+      } @else {
+        <p>Distances are straight-line measurements from the place you selected.</p>
+      }
     </div>
     <a class="view-switch" routerLink="/search" [queryParams]="listQuery()">List view</a>
   </header>
 
-  @if (needsLandmark()) {
+  @if (noLandmark()) {
     <section class="map-guidance" data-smoke="map-needs-landmark">
-      <h2>Choose a university or workplace first</h2>
-      <p>The map needs a place to measure from. Search for one, select it, then open map view.</p>
+      <h2>Pick a university or workplace to see distances</h2>
+      <p>The map is showing every matching room. Choose a place and each room gets a straight-line distance, closest first.</p>
       <a routerLink="/search" [queryParams]="listQuery()">Choose a place</a>
     </section>
-  } @else if (error()) {
+  }
+
+  @if (error()) {
     <div class="map-error" role="alert" data-smoke="map-error">
       <p>{{ error() }}</p>
       <a routerLink="/search" [queryParams]="listQuery()">Change the search</a>

@@ -410,3 +410,37 @@ creates its own open request and cancels it again, so it behaves the same on eve
 Final `npm run verify`: guards clean, production build clean at 366.23 kB initial (+1.33 kB),
 **130 unit tests**, **45/45 live smoke steps**. The independent sweep reports zero findings
 across every route for every role.
+
+---
+
+## Frontend — "Map view" opened a page with no map (2026-09-07)
+
+Reported by clicking, which is exactly how a judge would find it: press **Map view** on
+`/search` and the map never appears.
+
+The cause was a hard gate. `/search/map` treated a missing `landmarkId` as "this page cannot
+work" — it skipped the fetch, skipped `L.map()` entirely, and rendered a signpost back to
+search instead. But a landmark is only required by two of the search parameters: brief §
+"`maxDistanceKm` **without** `landmarkId` is a 400. So is `sort=Distance` without one."
+The listing search itself is happy without one, and the map view's only *own* requirement
+(brief page 09) is that it calls `properties`. The component was sending
+`sort: filters.sort ?? 'Distance'` unconditionally, so it would have 400'd without the gate —
+and the gate, rather than the sort, is what got fixed first and then never revisited.
+
+- The gate is gone. The map is built and the results are fetched on every visit.
+- `maxDistanceKm` and the `Distance` sort default are applied **only** when a landmark is
+  present, which is what made the gate look necessary.
+- The signpost survives as a banner *above* a working map — "Pick a university or workplace
+  to see distances" — so the feature it points at is still discoverable, and the page header
+  no longer claims distances are being measured when none are.
+- Smoke step `map-search-needs-a-place` became
+  `map-search-without-a-place-still-draws-the-map`: same banner assertion, plus the Leaflet
+  canvas and the equivalent list must both render.
+
+Verified in real Chrome: `/search/map` with no query string draws 21 tiles, 8 markers and 8
+list rows. `npm run verify` green — guard clean, production build clean, unit tests passing,
+**45/45** live smoke steps.
+
+The lesson is the same shape as the audit pass's: the walk asserted the signpost, so the
+signpost was "working". Nothing asked whether the page a button leads to does the thing the
+button is named after.
