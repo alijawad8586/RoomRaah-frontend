@@ -143,13 +143,53 @@ export const routes: Routes = [
     title: 'Listing — RoomRaah',
   },
   {
-    path: 'admin/listings',
+    path: 'admin',
     canActivate: [adminGuard],
     loadComponent: () =>
-      import('./features/admin/admin-listings-placeholder.component').then(
-        (m) => m.AdminListingsPlaceholderComponent
-      ),
-    title: 'Admin Listings — RoomRaah',
+      import('./features/admin/admin-shell.component').then((m) => m.AdminShellComponent),
+    children: [
+      { path: '', pathMatch: 'full', redirectTo: 'listings' },
+      {
+        path: 'listings',
+        loadComponent: () =>
+          import('./features/admin/listings/admin-listings.component').then(
+            (m) => m.AdminListingsComponent,
+          ),
+        title: 'Admin listings - RoomRaah',
+      },
+      {
+        path: 'revisions',
+        loadComponent: () =>
+          import('./features/admin/revisions/admin-revisions.component').then(
+            (m) => m.AdminRevisionsComponent,
+          ),
+        title: 'Admin revisions - RoomRaah',
+      },
+      {
+        path: 'reports',
+        loadComponent: () =>
+          import('./features/admin/reports/admin-reports.component').then(
+            (m) => m.AdminReportsComponent,
+          ),
+        title: 'Admin reports - RoomRaah',
+      },
+      {
+        path: 'inspections',
+        loadComponent: () =>
+          import('./features/admin/inspections/admin-inspections.component').then(
+            (m) => m.AdminInspectionsComponent,
+          ),
+        title: 'Admin inspections - RoomRaah',
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./features/admin/users/admin-users.component').then(
+            (m) => m.AdminUsersComponent,
+          ),
+        title: 'Admin users - RoomRaah',
+      },
+    ],
   },
   {
     path: '**',

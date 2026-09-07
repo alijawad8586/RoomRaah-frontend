@@ -324,6 +324,88 @@ export const WALK = [
     ],
   },
   {
+    name: 'admin-listings',
+    as: 'admin',
+    goto: '/admin/listings',
+    do: async (page) => {
+      await page.locator('[data-smoke=admin-listings] select').first().selectOption('PendingReview');
+      await page.waitForSelector('[data-smoke=admin-listings-list]');
+      await page.locator('[data-smoke=admin-listings-list]').getByRole('button', { name: /review listing/i }).first().click();
+      await page.waitForSelector('[data-smoke=admin-listing-detail]', { timeout: 15000 });
+    },
+    expect: [
+      { sel: '[data-smoke=admin-shell]' },
+      { sel: '[data-smoke=admin-listings-list], [data-smoke=admin-listings-empty]' },
+      { sel: '[data-smoke=admin-listing-detail]' },
+      { role: 'button', name: /record check/i },
+    ],
+  },
+  {
+    name: 'admin-revisions',
+    as: 'admin',
+    goto: '/admin/revisions?kind=Content',
+    do: async (page) => {
+      await page.getByRole('button', { name: /^availability$/i }).click();
+      await page.waitForURL((url) => url.searchParams.get('kind') === 'Availability');
+      await page.waitForSelector('[data-loaded-kind=Availability]', { timeout: 15000 });
+    },
+    expect: [
+      { sel: '[data-smoke=admin-revisions]' },
+      { sel: '[data-smoke=admin-revisions-list], [data-smoke=admin-revisions-empty]' },
+    ],
+  },
+  {
+    name: 'admin-reports-and-reviews',
+    as: 'admin',
+    goto: '/admin/reports',
+    expect: [
+      { sel: '[data-smoke=admin-reports-list], [data-smoke=admin-reports-empty]' },
+      { sel: '[data-smoke=admin-reviews-list], [data-smoke=admin-reviews-empty]' },
+    ],
+  },
+  {
+    name: 'admin-inspections',
+    as: 'admin',
+    goto: '/admin/inspections',
+    expect: [
+      { sel: '[data-smoke=admin-inspections-list], [data-smoke=admin-inspections-empty]' },
+      { sel: '[data-smoke=inspection-record-form]' },
+      { sel: '[data-smoke=badge-controls]' },
+    ],
+  },
+  {
+    name: 'admin-without-inspection-permission',
+    as: 'adminNoInspect',
+    goto: '/admin/inspections',
+    expect: [{ role: 'button', name: /remove badge/i }],
+    absent: [
+      { role: 'button', name: /record inspection/i },
+      { role: 'button', name: /grant badge/i },
+    ],
+  },
+  {
+    name: 'admin-users',
+    as: 'admin',
+    goto: '/admin/users',
+    expect: [{ sel: '[data-smoke=admin-users-list], [data-smoke=admin-users-empty]' }],
+  },
+  {
+    // The detail is rule 116's one sanctioned identity view. It is exercised but never
+    // screenshotted, so private account fields do not end up in test artifacts.
+    name: 'admin-user-detail',
+    as: 'admin',
+    goto: '/admin/users',
+    noScreenshot: true,
+    do: async (page) => {
+      await page.locator('[data-smoke=admin-user-row]').first().getByRole('button').click();
+      await page.waitForSelector('[data-smoke=admin-user-detail]', { timeout: 10000 });
+    },
+    expect: [
+      { sel: '[data-smoke=admin-user-detail]' },
+      { sel: '[data-smoke=admin-user-phone]' },
+    ],
+  },
+  {
     // Signed in, wrong role. Home rather than the sign-in screen: signing in again would
     // not help. Getting this wrong looks like a broken session.
     name: 'seeker-cannot-reach-admin',
@@ -459,7 +541,9 @@ async function run() {
         problems.push('owner-contact leak: ' + leak[0]);
       }
 
-      await page.screenshot({ path: join(SHOTS, step.name + '.png'), fullPage: true });
+      if (!step.noScreenshot) {
+        await page.screenshot({ path: join(SHOTS, step.name + '.png'), fullPage: true });
+      }
     } catch (err) {
       problems.push(String(err.message ?? err).split('\n')[0].slice(0, 200));
     }

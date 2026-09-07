@@ -61,7 +61,7 @@ not a status report and reading it to find out is the slow way.
 | C2 | Compare, saved | 13 14 | — | yes |
 | D | Seeker actions: shortlist toggle, visit request, my visits, write review, report dialog | 15 | 40m | yes |
 | E | Owner dashboard + listing form, photo flow, revision states | 18 19 | 75m | yes |
-| F | Admin panel, five tabs | 20 | 60m | no |
+| F | Admin panel, five tabs | 20 | 60m | yes |
 | G | Messages (hub + polling fallback) + profile | 16 17 | 45m | yes |
 | H | Map view; responsive pass at four breakpoints; accessibility pass; final verify | 09 | 40m | no |
 
