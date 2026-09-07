@@ -1,8 +1,8 @@
 import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from './core/auth/auth.service';
-import { ButtonComponent, BadgeComponent } from './shared/components';
+import { ButtonComponent } from './shared/components';
 
 @Component({
   selector: 'app-root',
@@ -11,8 +11,8 @@ import { ButtonComponent, BadgeComponent } from './shared/components';
     CommonModule,
     RouterOutlet,
     RouterLink,
+    RouterLinkActive,
     ButtonComponent,
-    BadgeComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',

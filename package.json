@@ -6,6 +6,11 @@
   "description": "Workspace and guards for the RoomRaah Angular frontend. The Angular application is generated into this directory; see AGENTS.md.",
   "scripts": {
     "guard": "node tools/check-rules.mjs",
-    "guard:test": "node --test tools/check-rules.test.mjs"
+    "guard:test": "node --test tools/check-rules.test.mjs",
+    "verify": "node tools/verify.mjs",
+    "smoke": "node tools/smoke.mjs"
+  },
+  "devDependencies": {
+    "playwright-core": "^1.63.0"
   }
 }

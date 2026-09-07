@@ -1,43 +1,55 @@
+<a class="skip-link" href="#main">Skip to content</a>
+
 <div class="app-shell">
-  <!-- Top Navigation Header -->
   <header class="app-header">
     <div class="container-centered header-inner">
-      <div class="brand-group">
-        <a routerLink="/" class="brand-link">
-          <h1 class="brand-title">RoomRaah</h1>
-        </a>
-      </div>
+      <a routerLink="/" class="brand-link">
+        <span class="brand-title">RoomRaah</span>
+      </a>
 
-      <nav class="header-nav" aria-label="Main Navigation">
-        <a routerLink="/design-system" class="nav-link">Design System</a>
-        <a routerLink="/signup" class="nav-link">Sign Up</a>
-        <a routerLink="/login" class="nav-link">Sign In</a>
-        <a routerLink="/verify" class="nav-link">Verify</a>
-        <a routerLink="/reset-password" class="nav-link">Reset Password</a>
+      <nav class="header-nav" aria-label="Main">
+        <a routerLink="/search" routerLinkActive="is-active" class="nav-link">Search</a>
+        <a routerLink="/how-it-works" routerLinkActive="is-active" class="nav-link">
+          How it works
+        </a>
+        @if (auth.userRole() === 'Owner') {
+          <a routerLink="/owner" routerLinkActive="is-active" class="nav-link">My listings</a>
+        }
+        @if (auth.userRole() === 'Admin') {
+          <a routerLink="/admin/listings" routerLinkActive="is-active" class="nav-link">Admin</a>
+        }
       </nav>
 
-      <div class="header-auth-status">
+      <div class="header-account">
         @if (auth.isAuthenticated()) {
-          <span class="user-greeting">
-            Signed in: <strong>{{ auth.currentUser()?.fullName }}</strong>
-            <app-badge variant="confirmed" size="sm">{{ auth.userRole() }}</app-badge>
-            @if (!auth.isEmailVerified()) {
-              <a routerLink="/verify" class="unverified-tag">
-                <app-badge variant="warning" size="sm">Unverified Email</app-badge>
-              </a>
-            }
-          </span>
+          <!-- An unverified account may browse but not act, so it is told once, here,
+               rather than discovering it at the moment it tries to do something. -->
+          @if (!auth.isEmailVerified()) {
+            <a routerLink="/verify" class="verify-nudge">Verify your email</a>
+          }
+          <span class="account-name">{{ auth.currentUser()?.fullName }}</span>
           <app-button variant="outline" size="sm" (clicked)="auth.logout().subscribe()">
-            Sign Out
+            Sign out
           </app-button>
         } @else {
-          <app-badge variant="inspection" size="sm">RoomRaah</app-badge>
+          <a routerLink="/login" class="nav-link">Sign in</a>
+          <a routerLink="/signup" class="signup-link">Create account</a>
         }
       </div>
     </div>
   </header>
 
-  <main class="app-main-content">
+  <main id="main" class="app-main-content">
     <router-outlet></router-outlet>
   </main>
+
+  <footer class="app-footer">
+    <div class="container-centered footer-inner">
+      <p class="footer-note">RoomRaah — rooms and hostels across Pakistan.</p>
+      <nav class="footer-nav" aria-label="Footer">
+        <a routerLink="/how-it-works">How it works</a>
+        <a routerLink="/search">Search</a>
+      </nav>
+    </div>
+  </footer>
 </div>

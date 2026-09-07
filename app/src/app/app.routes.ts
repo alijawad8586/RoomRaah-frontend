@@ -4,8 +4,15 @@ import { ownerGuard, adminGuard } from './core/auth/guards';
 export const routes: Routes = [
   {
     path: '',
-    redirectTo: 'design-system',
-    pathMatch: 'full',
+    loadComponent: () =>
+      import('./features/landing/landing.component').then((m) => m.LandingComponent),
+    title: 'RoomRaah — rooms and hostels across Pakistan',
+  },
+  {
+    path: 'how-it-works',
+    loadComponent: () =>
+      import('./features/how-it-works/how-it-works.component').then((m) => m.HowItWorksComponent),
+    title: 'How it works — RoomRaah',
   },
   {
     path: 'design-system',
@@ -14,6 +21,34 @@ export const routes: Routes = [
         (m) => m.DesignSystemComponent
       ),
     title: 'Design System — RoomRaah',
+  },
+  {
+    path: 'search',
+    loadComponent: () =>
+      import('./features/search/search.component').then((m) => m.SearchComponent),
+    title: 'Search rooms — RoomRaah',
+  },
+  {
+    path: 'property/:id/photos',
+    loadComponent: () =>
+      import('./features/property-detail/photos.component').then((m) => m.PropertyPhotosComponent),
+    title: 'Photographs — RoomRaah',
+  },
+  {
+    path: 'property/:id/reviews',
+    loadComponent: () =>
+      import('./features/property-detail/reviews.component').then(
+        (m) => m.PropertyReviewsComponent
+      ),
+    title: 'Reviews — RoomRaah',
+  },
+  {
+    path: 'property/:id',
+    loadComponent: () =>
+      import('./features/property-detail/property-detail.component').then(
+        (m) => m.PropertyDetailComponent
+      ),
+    title: 'Listing — RoomRaah',
   },
   {
     path: 'signup',

@@ -8,3 +8,6 @@ app/out-tsc/
 .env
 .env.*
 !.env.example
+
+# smoke-run screenshots and reports
+.verify/

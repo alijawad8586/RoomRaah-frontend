@@ -48,8 +48,8 @@ export function toLogin(router: Router, state: RouterStateSnapshot): UrlTree {
 
 /**
  * Signed in, wrong role. Home rather than the sign-in screen: signing in again would not
- * help, and it would look like the session had broken. `/` is the design system today and
- * becomes search at step 3 — either way it is the one page everybody is allowed to see.
+ * help, and it would look like the session had broken. `/` is the landing page, which is the
+ * one page everybody is allowed to see.
  */
 export function toHome(router: Router): UrlTree {
   return router.createUrlTree(['/']);
