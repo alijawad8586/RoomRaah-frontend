@@ -122,6 +122,32 @@ export const WALK = [
     expect: [{ sel: '[data-smoke=detail-error]' }],
   },
   {
+    name: 'compare-empty-is-not-a-blank-page',
+    goto: '/compare',
+    expect: [{ sel: '[data-smoke=compare-empty]' }],
+  },
+  {
+    // Ids in the query string, so a comparison survives being pasted to somebody else.
+    name: 'compare-by-url',
+    goto: '/compare?ids=1,2,4',
+    expect: [{ sel: '[data-smoke=compare-table]' }, 'Monthly total'],
+  },
+  {
+    // A fourth id is a 422 the interface is supposed to have prevented. It is capped where
+    // the URL is read, so this must render a table and not an error.
+    name: 'compare-caps-at-three',
+    goto: '/compare?ids=1,2,4,5,6',
+    expect: [{ sel: '[data-smoke=compare-table]' }],
+  },
+  {
+    name: 'saved-needs-an-account',
+    goto: '/saved',
+    do: async (page) => {
+      // Signed out, the guard sends them to sign in and remembers where they were going.
+      await page.waitForURL((u) => u.pathname.startsWith('/login'), { timeout: 10000 });
+    },
+  },
+  {
     name: 'not-found',
     goto: '/no-such-page',
     expect: [{ role: 'link', name: /search|home|roomraah/i }],
@@ -135,6 +161,64 @@ export const WALK = [
       await page.click('button[type=submit]');
       await page.waitForURL((u) => !u.pathname.startsWith('/login'), { timeout: 15000 });
     },
+  },
+  {
+    name: 'saved-list',
+    as: 'seeker',
+    goto: '/saved',
+    expect: [{ sel: '[data-smoke=saved-results], [data-smoke=saved-empty]' }],
+  },
+  {
+    // The page the whole review feature hangs off: completing a visit is what unlocks
+    // writing one, and a seeker with nowhere to press complete can never review anything.
+    name: 'my-visits',
+    as: 'seeker',
+    goto: '/visits',
+    expect: [{ sel: '[data-smoke=visits-list], [data-smoke=visits-empty]' }],
+  },
+  {
+    name: 'request-a-visit',
+    as: 'seeker',
+    goto: '/property/4/visit',
+    expect: [
+      { role: 'heading', name: /request a visit/i },
+      { sel: 'input[type=datetime-local]' },
+      { role: 'button', name: /send the request/i },
+    ],
+  },
+  {
+    // The date field must open inside the window the server accepts - in the future and at
+    // most sixty days ahead - because either side of it is a 400 nobody can act on.
+    name: 'visit-date-cannot-be-in-the-past',
+    as: 'seeker',
+    goto: '/property/4/visit',
+    do: async (page) => {
+      const field = page.locator('input[type=datetime-local]');
+      const min = await field.getAttribute('min');
+      const max = await field.getAttribute('max');
+      if (!min || !max) throw new Error('the visit date picker has no min/max window');
+      if (new Date(min) <= new Date()) throw new Error('min is not in the future: ' + min);
+      const days = (new Date(max) - new Date(min)) / 86400000;
+      if (days > 60) throw new Error('max is more than 60 days ahead');
+    },
+  },
+  {
+    // A review needs a completed visit, so this either shows the form or shows the sentence
+    // saying why not. What it must never do is show a blank page or a stack trace.
+    name: 'write-review',
+    as: 'seeker',
+    goto: '/property/1/review',
+    expect: [{ role: 'heading', name: /write a review/i }, { sel: 'textarea' }],
+  },
+  {
+    name: 'report-dialog-opens',
+    as: 'seeker',
+    goto: '/property/4',
+    do: async (page) => {
+      await page.getByRole('button', { name: /report this listing/i }).click();
+      await page.waitForSelector('[role=dialog]', { timeout: 5000 });
+    },
+    expect: [{ sel: '[role=dialog]' }, { role: 'button', name: /send report/i }],
   },
   {
     name: 'owner-dashboard',

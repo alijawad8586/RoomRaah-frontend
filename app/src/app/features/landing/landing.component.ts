@@ -4,6 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { PropertyCardComponent } from '../../shared/components';
 import { PropertyService } from '../../core/services/property.service';
 import { ReferenceService } from '../../core/services/reference.service';
+import { EngagementService } from '../../core/services/engagement.service';
 import { LocationSuggestion, PropertyCard } from '../../core/models/catalog.model';
 
 /**
@@ -24,6 +25,7 @@ export class LandingComponent {
   private readonly properties = inject(PropertyService);
   private readonly reference = inject(ReferenceService);
   private readonly router = inject(Router);
+  private readonly engagement = inject(EngagementService);
 
   readonly featured = signal<PropertyCard[]>([]);
   readonly loading = signal(true);
@@ -34,6 +36,8 @@ export class LandingComponent {
   readonly skeletons = Array.from({ length: 3 });
 
   constructor() {
+    this.engagement.primeShortlist();
+
     this.properties.featured().subscribe({
       next: (list) => {
         this.featured.set((list ?? []).slice(0, 6));
@@ -46,6 +50,14 @@ export class LandingComponent {
         this.loading.set(false);
       },
     });
+  }
+
+  isSaved(id: number): boolean {
+    return this.engagement.isSaved(id);
+  }
+
+  toggleSave(id: number): void {
+    this.engagement.toggle(id, '/');
   }
 
   onQuery(value: string): void {

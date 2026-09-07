@@ -12,6 +12,7 @@ import {
 } from '../../shared/components';
 import { PropertyService } from '../../core/services/property.service';
 import { ReferenceService } from '../../core/services/reference.service';
+import { EngagementService } from '../../core/services/engagement.service';
 import { toFailure } from '../../core/http/api-error';
 import {
   Area,
@@ -58,6 +59,7 @@ export class SearchComponent {
   private readonly router = inject(Router);
   private readonly properties = inject(PropertyService);
   private readonly reference = inject(ReferenceService);
+  private readonly engagement = inject(EngagementService);
 
   readonly roomTypes = ROOM_TYPES;
   readonly genderPolicies = GENDER_POLICIES;
@@ -93,6 +95,8 @@ export class SearchComponent {
   readonly skeletons = computed(() => Array.from({ length: this.pageSize() }));
 
   constructor() {
+    this.engagement.primeShortlist();
+
     this.reference.cities().subscribe((list) => this.cities.set(list ?? []));
     this.reference.facilities().subscribe((list) => this.facilities.set(list ?? []));
 
@@ -102,6 +106,15 @@ export class SearchComponent {
       this.loadAreas(filters.cityId);
       this.fetch(filters);
     });
+  }
+
+  isSaved(id: number): boolean {
+    return this.engagement.isSaved(id);
+  }
+
+  /** The return URL keeps the filters: signing in must not throw away the search. */
+  toggleSave(id: number): void {
+    this.engagement.toggle(id, this.router.url);
   }
 
   /**

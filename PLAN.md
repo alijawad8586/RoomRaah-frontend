@@ -45,32 +45,33 @@ Four gates, in the order that fails cheapest first:
 moment that slips, the script stops being the answer to "sab theek hai?" and we are back to
 clicking through twenty pages by hand, which is the thing this exists to prevent.
 
-## 3. What is already built
+## 3. The ledger — read this first after a compaction
 
-Steps 1 and 2 of the brief's build order are done and green:
+Update the Done column **in the same commit** that finishes a slice. This table and
+`RoomRaah_Progress.md` are the only two places that say where the build is; the codebase is
+not a status report and reading it to find out is the slow way.
 
-- Design system: button, badge, form-field + input directive, dialog, spinner, skeleton,
-  empty-state, property-card, location-autocomplete.
-- Auth end to end: signup, login, verify, reset-password; JWT util; interceptor with a
-  queued silent refresh; four guards sharing `withSession()` in
-  `core/auth/guards/session.ts`.
-- 93 unit tests, guards green, production build clean.
+| # | Slice | Pages | Budget | Done |
+|---|---|---|---|---|
+| — | Design system: button, badge, form-field + input, dialog, spinner, skeleton, empty-state, property-card, location-autocomplete | — | — | yes |
+| — | Auth end to end: signup, login, verify, reset; JWT util; interceptor with queued silent refresh; four guards on `withSession()` | 03 04 05 06 | — | yes |
+| A | Plumbing: typed catalogue models, error mapping, app shell + nav, reference-data cache | — | 45m | yes |
+| B | Search + filter panel + property detail + photos + reviews | 07 08 10 11 12 | 90m | yes |
+| C | Landing, how it works | 01 02 | 45m | yes |
+| C2 | Compare, saved | 13 14 | — | yes |
+| D | Seeker actions: shortlist toggle, visit request, my visits, write review, report dialog | 15 | 40m | yes |
+| E | Owner dashboard + listing form, photo flow, revision states | 18 19 | 75m | no |
+| F | Admin panel, five tabs | 20 | 60m | no |
+| G | Messages (REST polling) + profile | 16 17 | 45m | no |
+| H | Map view; responsive pass at four breakpoints; accessibility pass; final verify | 09 | 40m | no |
 
-## 4. What is left, in the order it gets built
+Green as of the last commit: guard clean, production build clean, unit tests passing,
+smoke walk passing. `npm run verify` is the check — never a hand-clicked page.
 
-Slices land back to back. Times are budgets, not estimates — when one overruns, the scope
-inside it gets cut, not the clock.
+## 4. How the remaining slices are run
 
-| # | Slice | Pages (brief §11) | Budget |
-|---|---|---|---|
-| A | Plumbing: typed API layer from the OpenAPI, error mapping, app shell + nav, reference-data cache | — | 45m |
-| B | Search + filter panel + property detail + photos + reviews | 07 08 10 11 12 | 90m |
-| C | Landing, how it works, compare, saved | 01 02 13 14 | 45m |
-| D | Seeker actions: visit request, write review, report dialog | 15 | 40m |
-| E | Owner dashboard + listing form, photo flow, revision states | 18 19 | 75m |
-| F | Admin panel, five tabs | 20 | 60m |
-| G | Messages (REST) + profile | 16 17 | 45m |
-| H | Responsive pass at four breakpoints, accessibility pass, final verify | — | 40m |
+Slices land back to back, in the ledger's order. Times are budgets, not estimates — when
+one overruns, the scope inside it gets cut, not the clock, and the cut gets said out loud.
 
 ### Cut, deliberately, and what the user gets instead
 

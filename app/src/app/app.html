@@ -12,6 +12,13 @@
         <a routerLink="/how-it-works" routerLinkActive="is-active" class="nav-link">
           How it works
         </a>
+        <!-- A seeker's own two lists. They are behind the verified guard, so they are only
+             offered to somebody the guard will let through - a nav link that bounces you to
+             a sign-in screen is the same bug as a dead button. -->
+        @if (auth.isAuthenticated() && auth.userRole() === 'Seeker') {
+          <a routerLink="/saved" routerLinkActive="is-active" class="nav-link">Saved</a>
+          <a routerLink="/visits" routerLinkActive="is-active" class="nav-link">My visits</a>
+        }
         @if (auth.userRole() === 'Owner') {
           <a routerLink="/owner" routerLinkActive="is-active" class="nav-link">My listings</a>
         }

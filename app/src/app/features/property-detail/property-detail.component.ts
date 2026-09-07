@@ -1,7 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { BadgeComponent } from '../../shared/components';
+import { BadgeComponent, ButtonComponent } from '../../shared/components';
+import { ReportDialogComponent } from './report-dialog.component';
+import { EngagementService } from '../../core/services/engagement.service';
 import { PropertyService } from '../../core/services/property.service';
 import { toFailure } from '../../core/http/api-error';
 import {
@@ -32,13 +34,14 @@ const CHECK_LABELS: Record<VerificationCheckType, string> = {
 @Component({
   selector: 'app-property-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink, BadgeComponent],
+  imports: [CommonModule, RouterLink, BadgeComponent, ButtonComponent, ReportDialogComponent],
   templateUrl: './property-detail.component.html',
   styleUrls: ['./property-detail.component.scss'],
 })
 export class PropertyDetailComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly properties = inject(PropertyService);
+  private readonly engagement = inject(EngagementService);
 
   readonly listing = signal<PropertyDetail | null>(null);
   readonly loading = signal(true);
@@ -49,6 +52,7 @@ export class PropertyDetailComponent {
   readonly reviewCount = signal(0);
 
   readonly activePhoto = signal(0);
+  readonly reportOpen = signal(false);
 
   readonly photos = computed(() => this.listing()?.photos ?? []);
   readonly hasBeds = computed(() => (this.listing()?.availableBeds ?? 0) > 0);
@@ -65,6 +69,9 @@ export class PropertyDetailComponent {
   });
 
   constructor() {
+    // So the save button knows which way round it is before anybody presses it.
+    this.engagement.primeShortlist();
+
     this.route.paramMap.subscribe((params) => {
       const id = Number(params.get('id'));
       if (!Number.isFinite(id) || id <= 0) {
@@ -121,6 +128,14 @@ export class PropertyDetailComponent {
       currency: 'PKR',
       maximumFractionDigits: 0,
     }).format(value);
+  }
+
+  isSaved(id: number): boolean {
+    return this.engagement.isSaved(id);
+  }
+
+  toggleSave(id: number): void {
+    this.engagement.toggle(id, `/property/${id}`);
   }
 
   showPhoto(index: number): void {

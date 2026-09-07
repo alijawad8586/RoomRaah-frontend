@@ -216,7 +216,32 @@
             of what was agreed.
           </p>
         </div>
+
+        <div class="action-card">
+          <a class="action-primary" [routerLink]="['/property', listing.id, 'visit']">
+            Request a visit
+          </a>
+
+          <app-button
+            variant="outline"
+            [fullWidth]="true"
+            [pressed]="isSaved(listing.id)"
+            (clicked)="toggleSave(listing.id)"
+          >
+            {{ isSaved(listing.id) ? 'Saved' : 'Save this room' }}
+          </app-button>
+
+          <button type="button" class="action-report" (click)="reportOpen.set(true)">
+            Report this listing
+          </button>
+        </div>
       </aside>
     </div>
+
+    <app-report-dialog
+      [isOpen]="reportOpen()"
+      [propertyId]="listing.id"
+      (closed)="reportOpen.set(false)"
+    />
   </article>
 }

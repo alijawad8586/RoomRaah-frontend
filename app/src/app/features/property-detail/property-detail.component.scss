@@ -377,3 +377,32 @@
   color: $color-navy;
   font-weight: $font-weight-medium;
 }
+
+.action-card {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.action-primary {
+  display: block;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  background: #123b5d;
+  color: #fff;
+  text-decoration: none;
+}
+
+.action-report {
+  border: 0;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  justify-self: center;
+}

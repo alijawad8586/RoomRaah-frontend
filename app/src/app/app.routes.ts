@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { ownerGuard, adminGuard } from './core/auth/guards';
+import { ownerGuard, adminGuard, verifiedGuard } from './core/auth/guards';
 
 export const routes: Routes = [
   {
@@ -27,6 +27,44 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/search/search.component').then((m) => m.SearchComponent),
     title: 'Search rooms — RoomRaah',
+  },
+  {
+    path: 'compare',
+    loadComponent: () =>
+      import('./features/compare/compare.component').then((m) => m.CompareComponent),
+    title: 'Compare rooms — RoomRaah',
+  },
+  {
+    path: 'saved',
+    canActivate: [verifiedGuard],
+    loadComponent: () =>
+      import('./features/seeker/saved/saved.component').then((m) => m.SavedComponent),
+    title: 'Saved rooms — RoomRaah',
+  },
+  {
+    path: 'visits',
+    canActivate: [verifiedGuard],
+    loadComponent: () =>
+      import('./features/seeker/visits/visits.component').then((m) => m.VisitsComponent),
+    title: 'My visits — RoomRaah',
+  },
+  {
+    path: 'property/:id/visit',
+    canActivate: [verifiedGuard],
+    loadComponent: () =>
+      import('./features/seeker/visit-request/visit-request.component').then(
+        (m) => m.VisitRequestComponent
+      ),
+    title: 'Request a visit — RoomRaah',
+  },
+  {
+    path: 'property/:id/review',
+    canActivate: [verifiedGuard],
+    loadComponent: () =>
+      import('./features/seeker/write-review/write-review.component').then(
+        (m) => m.WriteReviewComponent
+      ),
+    title: 'Write a review — RoomRaah',
   },
   {
     path: 'property/:id/photos',

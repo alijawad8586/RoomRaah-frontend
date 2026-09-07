@@ -265,7 +265,11 @@
       } @else {
         <div class="results-grid" data-smoke="results">
           @for (property of results(); track property.id) {
-            <app-property-card [property]="property" />
+            <app-property-card
+              [property]="property"
+              [isSaved]="isSaved(property.id)"
+              (saveToggled)="toggleSave($event)"
+            />
           }
         </div>
 
