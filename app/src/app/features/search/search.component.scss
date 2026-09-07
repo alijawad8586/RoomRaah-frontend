@@ -17,7 +17,8 @@
 }
 
 .search-title {
-  font-size: $font-size-2xl;
+  font-size: clamp(1.75rem, 3vw, 2.4rem);
+  letter-spacing: -0.04em;
   font-weight: $font-weight-bold;
   color: $color-navy;
   margin: 0 0 $space-4;
@@ -124,6 +125,10 @@
   align-items: center;
   gap: $space-3;
   margin-bottom: $space-5;
+  padding: $space-3;
+  background: $color-surface;
+  border: 1px solid $color-slate-200;
+  border-radius: $radius-lg;
 }
 
 .filters-toggle {
@@ -222,6 +227,7 @@
   background: $color-surface;
   border: 1px solid $color-slate-200;
   border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
 
   // Tablet gets the brief's collapsible panel above its two-column result grid.
   @include tablet {
@@ -260,6 +266,8 @@
   align-items: center;
   justify-content: space-between;
   gap: $space-3;
+  padding-bottom: $space-3;
+  border-bottom: 1px solid $color-slate-200;
 }
 
 .filter-heading {
@@ -310,14 +318,20 @@
 
 .rent-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: $space-2;
 }
 
 .rent-field {
+  min-width: 0;
   display: flex;
   flex-direction: column;
   gap: $space-1;
+}
+
+.rent-field .filter-input {
+  width: 100%;
+  min-width: 0;
 }
 
 .rent-label {

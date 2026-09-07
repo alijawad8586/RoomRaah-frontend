@@ -36,6 +36,7 @@
   z-index: 30;
   background: $color-surface;
   border-bottom: 1px solid $color-slate-200;
+  box-shadow: 0 4px 24px rgb(18 59 93 / 4%);
 }
 
 .header-inner {
@@ -61,7 +62,7 @@
   font-size: $font-size-xl;
   font-weight: $font-weight-bold;
   color: $color-navy;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.055em;
 }
 
 .header-nav {
@@ -83,7 +84,9 @@
   color: $color-slate-700;
   font-weight: $font-weight-medium;
   text-decoration: none;
-  padding: $space-2 0;
+  padding: $space-2 $space-2;
+  border-radius: 6px;
+  font-size: $font-size-sm;
 
   &:hover,
   &.is-active {
@@ -91,7 +94,8 @@
   }
 
   &.is-active {
-    box-shadow: inset 0 -2px 0 $color-navy;
+    background: $color-navy-light;
+    box-shadow: inset 0 -2px 0 $color-green;
   }
 
   &:focus-visible {
@@ -147,7 +151,7 @@
 }
 
 .app-footer {
-  background: $color-surface;
+  background: #eef3f5;
   border-top: 1px solid $color-slate-200;
   padding: $space-6 0;
 }

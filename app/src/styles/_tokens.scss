@@ -102,8 +102,8 @@ $radius-full: 9999px;
 
 // --- Box Shadows (navy-tinted for cohesion) ---
 $shadow-xs: 0 1px 2px 0 rgba(18, 59, 93, 0.04);
-$shadow-sm: 0 1px 3px 0 rgba(18, 59, 93, 0.08), 0 1px 2px -1px rgba(18, 59, 93, 0.08);
-$shadow-md: 0 4px 6px -1px rgba(18, 59, 93, 0.08), 0 2px 4px -2px rgba(18, 59, 93, 0.06);
+$shadow-sm: 0 3px 14px -6px rgba(18, 59, 93, 0.14);
+$shadow-md: 0 12px 32px -12px rgba(18, 59, 93, 0.18), 0 2px 5px rgba(18, 59, 93, 0.03);
 $shadow-lg: 0 10px 15px -3px rgba(18, 59, 93, 0.1), 0 4px 6px -4px rgba(18, 59, 93, 0.06);
 $shadow-xl: 0 20px 25px -5px rgba(18, 59, 93, 0.12), 0 8px 10px -6px rgba(18, 59, 93, 0.06);
 $shadow-focus: 0 0 0 3px rgba(18, 59, 93, 0.25);

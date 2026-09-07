@@ -16,11 +16,11 @@
   justify-content: center;
   position: relative;
   font-family: $font-family-base;
-  font-weight: $font-weight-medium;
+  font-weight: $font-weight-semibold;
   line-height: $line-height-tight;
   border-radius: $radius-md;
   border: 1px solid transparent;
-  transition: all $transition-fast;
+  transition: background-color $transition-fast, border-color $transition-fast, box-shadow $transition-fast, transform $transition-fast;
   user-select: none;
   text-decoration: none;
   white-space: nowrap;
@@ -89,9 +89,9 @@
   }
 
   &.btn-success {
-    background-color: $color-green;
+    background-color: $color-green-hover;
     color: #ffffff;
-    border-color: $color-green;
+    border-color: $color-green-hover;
 
     @include focus-visible-green;
 
@@ -140,7 +140,7 @@
 
   &.btn-outline-green {
     background-color: transparent;
-    color: $color-green;
+    color: $color-green-hover;
     border-color: $color-green;
 
     @include focus-visible-green;

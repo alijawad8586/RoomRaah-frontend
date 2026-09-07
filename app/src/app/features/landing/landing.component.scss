@@ -7,9 +7,9 @@
 }
 
 .hero {
-  background: $color-navy;
+  background: radial-gradient(ellipse at 90% 10%, #225a72 0, transparent 55%), linear-gradient(120deg, #0b263e, $color-navy);
   color: #fff;
-  padding: $space-12 0;
+  padding: clamp(3rem, 7vw, 6rem) 0;
 }
 
 .hero-inner {
@@ -19,8 +19,11 @@
 }
 
 .hero-title {
+  color: #fff;
   margin: 0 0 $space-3;
-  font-size: $font-size-3xl;
+  font-size: clamp(2.15rem, 4.6vw, 3.75rem);
+  letter-spacing: -0.045em;
+  text-wrap: balance;
   font-weight: $font-weight-bold;
   line-height: $line-height-tight;
 }
@@ -35,6 +38,11 @@
 .hero-search {
   position: relative;
   text-align: left;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 20px;
+  background: rgb(255 255 255 / 7%);
+  box-shadow: 0 20px 48px rgb(0 0 0 / 12%);
 }
 
 .hero-label {
@@ -72,7 +80,7 @@
   padding: $space-3 $space-6;
   border: 0;
   border-radius: $radius-md;
-  background: $color-green;
+  background: $color-green-hover;
   color: #fff;
   font-weight: $font-weight-semibold;
   cursor: pointer;
@@ -158,7 +166,8 @@
 
 .featured-title {
   margin: 0;
-  font-size: $font-size-xl;
+  font-size: clamp(1.5rem, 2.5vw, 2rem);
+  letter-spacing: -0.035em;
   color: $color-navy;
 }
 

@@ -55,7 +55,7 @@
     transition: border-color $transition-fast, box-shadow $transition-fast;
 
     &::placeholder {
-      color: $color-slate-400;
+      color: $color-slate-500;
     }
 
     &:focus {
@@ -74,7 +74,7 @@
 
   ::ng-deep input.form-control,
   ::ng-deep select.form-control {
-    height: 40px;
+    height: 44px;
   }
 
   ::ng-deep textarea.form-control {

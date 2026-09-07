@@ -29,14 +29,19 @@
 
 .how-steps {
   margin: 0 0 $space-8;
-  padding-left: $space-5;
+  padding-left: 0;
   display: flex;
   flex-direction: column;
   gap: $space-6;
 }
 
 .how-step {
-  padding-left: $space-2;
+  padding: $space-5;
+  background: $color-surface;
+  border: 1px solid $color-slate-200;
+  border-left: 3px solid $color-green;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-sm;
 }
 
 .step-title {

@@ -529,3 +529,21 @@ interrupted run.
 Build clean at 369.75 kB, 131 unit tests passing, smoke 46/47 at the time of the last full run
 with the single failure being the 360px overflow, fixed and re-measured after (scrollWidth 360
 on a 360 viewport).
+
+## Frontend — SCSS-only visual polish (2026-09-07)
+
+User authorized UI enhancement with SCSS, allowing only styling classes/IDs in HTML if
+needed. No HTML changes were necessary; TypeScript, API contracts, handlers, routes and
+tests remain unchanged. Backend files and backend Git history were not touched.
+
+- Refined navy/green hero, fluid heading sizes, search surface, navigation and footer.
+- Unified card shadows, auth panels, owner/seeker cards, admin tabs and messaging surfaces.
+- Improved form placeholder and green-button contrast; retained error, disabled, loading,
+  focus and reduced-motion states.
+- Visual review caught the inherited dark hero heading and clipped rent fields. Explicit
+  white heading color and shrinkable input columns fix both using SCSS alone.
+- Inspected phone and desktop screenshots; measured both rent inputs inside the sidebar.
+
+Final verification on the finished styles: all guards pass, production build 371.06 kB
+initial (98.75 kB estimated transfer), 131 unit tests and 47/47 live smoke steps pass.
+The smoke includes four responsive widths and existing public, seeker, owner and admin flows.

@@ -29,6 +29,10 @@
   overflow-x: auto;
   border-bottom: 1px solid #dbe3e8;
   margin-bottom: 1.5rem;
+  padding: 0.4rem;
+  border: 1px solid #dbe3e8;
+  border-radius: 12px;
+  background: #fff;
 }
 
 .admin-tabs a {
@@ -43,6 +47,8 @@
   color: #123b5d;
   border-color: #16a36a;
   font-weight: 700;
+  background: #eef6f4;
+  border-radius: 8px 8px 0 0;
 }
 
 @media (max-width: 700px) {

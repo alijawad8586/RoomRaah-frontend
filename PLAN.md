@@ -20,7 +20,9 @@ for this deadline. That is a decision the user made, not a corner cut quietly. I
 the project's usual "tests are the definition of done" rule to: test what protects the demo
 path, and let `npm run verify` cover the rest.
 
-**Visual polish is not ours.** The user will restyle with ChatGPT after the build. We write
+**Amended: visual polish is now authorized (2026-09-07).** SCSS-only enhancement;
+HTML may gain styling classes/IDs only. No bindings, handlers, routes or TypeScript changes.
+The original build boundary follows for historical context. We write
 markup, TypeScript and only the SCSS that is *behaviour* — grid, breakpoints, overlays,
 sticky headers, focus states. The boundary is mechanical: templates and TS are ours, `.scss`
 is the polish surface, and semantic class names are the contract between the two halves.
@@ -69,9 +71,10 @@ not a status report and reading it to find out is the slow way.
 | J | Map view without a landmark draws the map instead of a signpost | 09 | — | yes |
 | K | Distance: nearest-first on pick, and compare carries the place | 07 13 | — | yes |
 | L | Distance is measured from the person, in the browser | 07 09 10 13 | — | yes |
+| M | SCSS-only UI polish; existing templates and functionality preserved | all | — | yes |
 
-Final green run: guard clean, production build 366.23 kB initial, 130 unit tests passing,
-and 45/45 live smoke steps passing. `npm run verify` remains the check.
+Latest green run after UI polish: guards clean, production build 371.06 kB initial,
+131 unit tests and 47/47 live smoke steps passing. `npm run verify` remains the check.
 
 ### 3.1 What the audit pass found, and why the walk had missed it
 

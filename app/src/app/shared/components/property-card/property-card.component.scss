@@ -10,7 +10,7 @@
   display: flex;
   flex-direction: column;
   background-color: $color-surface;
-  border-radius: $radius-lg;
+  border-radius: $radius-xl;
   border: 1px solid $color-slate-200;
   box-shadow: $shadow-sm;
   overflow: hidden;
@@ -149,7 +149,7 @@
 }
 
 .card-content {
-  padding: $space-4;
+  padding: $space-5;
   display: flex;
   flex-direction: column;
   gap: $space-2;
@@ -169,6 +169,7 @@
   color: $color-navy;
   margin: 0;
   line-height: $line-height-normal;
+  letter-spacing: -0.02em;
   @include line-clamp(2);
 }
 
@@ -224,6 +225,8 @@
   margin-top: auto;
   padding-top: $space-3;
   border-top: 1px solid $color-slate-100;
+  flex-wrap: wrap;
+  gap: $space-2;
 }
 
 .price-block {

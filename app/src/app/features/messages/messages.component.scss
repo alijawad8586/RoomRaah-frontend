@@ -110,7 +110,8 @@
 }
 
 .thread-item.is-active {
-  background: #eff6ff;
+  background: #eef6f4;
+  box-shadow: inset 3px 0 #16a36a;
 }
 
 .thread-item:focus-visible {
@@ -167,6 +168,7 @@
   overflow-y: auto;
   min-height: 0;
   padding: 1rem;
+  background: #f7f9fa;
 }
 
 .thread-empty,
@@ -205,8 +207,8 @@
 }
 
 .bubble-row.is-mine .bubble {
-  border-color: #bfdbfe;
-  background: #eff6ff;
+  border-color: #c7e5d9;
+  background: #eaf7f1;
 }
 
 .bubble-body {
