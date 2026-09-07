@@ -480,3 +480,52 @@ compare basket left full disables every tick in the steps that follow.
 
 `npm run verify` green: guard clean, production build clean, unit tests passing, **47/47**
 live smoke steps.
+
+---
+
+## Frontend — distance is measured from the person, not from a landmark (2026-09-07)
+
+The user's call: the number on a card should say how far the room is **from them**, and if a
+browser will not say where they are, a dash is acceptable.
+
+The API cannot answer that. `/properties` measures from a seeded `landmarkId` and takes no
+arbitrary point, and the backend is read-only here. It does not need to: every card already
+carries `latitude` and `longitude`, so once the browser gives a position the arithmetic is a
+haversine over two points we hold.
+
+- **`GeolocationService`** (core). Asks once, keeps the answer in `sessionStorage` for the
+  session, and exposes it as a signal, so granting the permission on search fills in compare,
+  the map and the listing page without a second prompt. It re-reads a permission already
+  granted on load, so a returning visitor simply sees distances.
+- **One control, in the app shell.** "Use my location" turns into "Distances from you" once
+  granted, and clicking it again forgets the position. It is **hidden** where geolocation
+  cannot work rather than offered and dead - see below.
+- **Four screens** now print `X km from you (straight-line)`: the property card (so search
+  and every list built on it), the listing page, the map's list, and compare's row, which is
+  relabelled "Distance from you".
+
+Two bugs found by testing rather than by reading:
+
+1. `@if (distanceFromYou(...); as km)` silently dropped a room **0.0 km away**, because zero
+   is falsy. Both templates now bind with `@let` and test `!== null`.
+2. The longer label pushed the property card 33px past a 360px viewport - `.distance-text` is
+   `nowrap`, and the row had no `flex-wrap`. The location row wraps now.
+
+**Known and accepted:** `navigator.geolocation` is a secure-context API. The deployed demo is
+plain http, so the browser withholds it there and every distance is a dash; on `localhost` it
+works. Making it work live means HTTPS on the site *and* on the API, which is backend and
+infrastructure work. The user decided the dash is fine for submission.
+
+Landmark search is untouched and still server-side: choosing a place still sorts nearest-first
+and "Within 5 km" still cuts the list, because both are `landmarkId` filters the API applies.
+
+Walk changes: the smoke context now stands at Main Boulevard, Gulberg, so the walk is somebody
+somewhere. `distances-are-measured-from-you` checks all four screens and asserts the magnitude
+(a Lahore room must be single-digit km) - a broken haversine still prints a plausible number.
+`a-room-you-already-asked-to-visit-says-so` no longer assumes a clean database: it reads the
+state first and only creates a request if none is open, which is why it had failed after an
+interrupted run.
+
+Build clean at 369.75 kB, 131 unit tests passing, smoke 46/47 at the time of the last full run
+with the single failure being the 360px overflow, fixed and re-measured after (scrollWidth 360
+on a 360 viewport).

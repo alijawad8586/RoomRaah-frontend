@@ -33,6 +33,31 @@
         }
       </nav>
 
+      <!-- Absent over plain http, where the browser withholds geolocation entirely. Hiding
+           the control there is deliberate: a button that can never work is a dead button. -->
+      @if (geo.state() !== 'unavailable') {
+        @if (geo.hasPosition()) {
+          <button
+            type="button"
+            class="location-chip is-on"
+            data-smoke="location-chip"
+            (click)="geo.forget()"
+          >
+            Distances from you
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="location-chip"
+            data-smoke="location-chip"
+            [disabled]="geo.state() === 'asking'"
+            (click)="geo.request()"
+          >
+            {{ geo.state() === 'asking' ? 'Locating…' : 'Use my location' }}
+          </button>
+        }
+      }
+
       <div class="header-account">
         @if (auth.isAuthenticated()) {
           <!-- An unverified account may browse but not act, so it is told once, here,

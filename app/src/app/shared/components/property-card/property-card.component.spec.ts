@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { PropertyCardComponent } from './property-card.component';
 import { PropertyCardItem } from './property-card.model';
+import { GeolocationService } from '../../../core/services/geolocation.service';
 
 describe('PropertyCardComponent', () => {
   let component: PropertyCardComponent;
@@ -55,10 +56,22 @@ describe('PropertyCardComponent', () => {
     expect(locationEl.textContent).toContain('Clifton, Karachi');
   });
 
-  it('should display straight-line distance with explicit label', () => {
+  // The card measures from the person, not from a landmark, so the distance only exists
+  // once a position does. Both halves matter: silence without one, and a labelled
+  // straight-line figure with one.
+  it('shows no distance until the browser has given a position', () => {
+    expect(fixture.nativeElement.querySelector('.distance-text')).toBeNull();
+  });
+
+  it('displays straight-line distance from the person once a position is known', () => {
+    // Clifton, about 2.2km along the coast from the mock listing.
+    TestBed.inject(GeolocationService).position.set({ lat: 24.8138, lng: 67.0522 });
+    fixture.detectChanges();
+
     const distanceEl = fixture.nativeElement.querySelector('.distance-text');
     expect(distanceEl).toBeTruthy();
-    expect(distanceEl.textContent).toContain('1.2 km (straight-line)');
+    expect(distanceEl.textContent).toContain('km from you (straight-line)');
+    expect(distanceEl.textContent).toContain('2.2 km');
   });
 
   it('should render inspection badge when hasInspectionBadge is true', () => {

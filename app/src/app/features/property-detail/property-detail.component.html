@@ -23,9 +23,11 @@
         <h1 class="detail-title">{{ listing.title }}</h1>
         <p class="detail-location">
           {{ listing.addressLine }} · {{ listing.areaName }}, {{ listing.cityName }}
-          @if (listing.distanceKm !== null) {
+          <!-- `as` would drop a room 0.0km away: zero is falsy. Null is the absent case. -->
+          @let km = distanceFromYou(listing.latitude, listing.longitude);
+          @if (km !== null) {
             <span class="detail-distance">
-              · {{ listing.distanceKm }} km away (straight-line)
+              · {{ km | number:'1.0-1' }} km from you (straight-line)
             </span>
           }
         </p>

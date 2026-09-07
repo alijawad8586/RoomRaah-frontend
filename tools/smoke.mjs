@@ -154,10 +154,11 @@ export const WALK = [
     expect: [{ sel: '[data-smoke=search-error]' }],
   },
   {
-    // Distances are computed and shown whenever a place is chosen. What this guards is that
-    // choosing one actually reorders the list - a nearby room listed under a room 1000km
-    // away reads as 'distance is broken' even though every number on the page is right.
-    name: 'choosing-a-place-sorts-by-distance-and-can-filter-by-it',
+    // A place still drives the server-side ordering and the "within N km" cut - those take a
+    // landmarkId and nothing else. What the pages *print* is a different measurement: how
+    // far each room is from the person reading. Both are asserted, because they are two
+    // mechanisms and either can break while the other keeps working.
+    name: 'choosing-a-place-sorts-and-filters-by-distance',
     goto: '/search',
     do: async (page) => {
       await page.locator('#place-search').fill('Punjab');
@@ -168,26 +169,10 @@ export const WALK = [
         throw new Error('choosing a place did not sort by distance: ' + page.url());
       }
 
-      // The re-fetch lands after the query string does, so wait for a rendered distance
-      // rather than counting the cards that were on screen before the place was chosen.
-      await page.waitForFunction(
-        () => /[\d.]+ km \(straight-line\)/.test(document.body.innerText),
-        { timeout: 20000 },
-      );
-
-      const order = await page.$$eval('[data-smoke=result-card], article', (cards) =>
-        cards
-          .map((card) => Number((card.innerText.match(/([\d.]+) km/) || [])[1]))
-          .filter(Number.isFinite),
-      );
-      if (order.length < 2) throw new Error('only ' + order.length + ' cards carried a distance');
-      const sorted = [...order].sort((a, b) => a - b);
-      if (order.join() !== sorted.join()) {
-        throw new Error('results were not nearest-first: ' + order.join(', '));
-      }
+      await page.waitForTimeout(2000);
+      const before = await page.locator('[data-smoke=result-card], article').count();
 
       // Within 5km must actually drop the far ones rather than only relabel them.
-      const before = order.length;
       await page.selectOption('select[aria-label="Maximum straight-line distance"]', '5');
       await page.waitForFunction(() => location.search.includes('maxDistanceKm=5'), { timeout: 15000 });
       await page.waitForTimeout(2000);
@@ -198,27 +183,49 @@ export const WALK = [
     },
   },
   {
-    // The Distance row used to be a permanent dash: compare never carried the place.
-    name: 'compare-keeps-the-chosen-place',
-    goto: '/search?landmarkId=1&sort=Distance',
+    // Every distance on the product is measured from the person, in the browser, because the
+    // API measures only from a seeded landmark. This walks the four screens that print one.
+    name: 'distances-are-measured-from-you',
+    goto: '/search',
     do: async (page) => {
-      const ticks = page.locator('[data-smoke=compare-tick]');
-      await ticks.first().waitFor({ timeout: 15000 });
-      await ticks.nth(0).check();
-      await ticks.nth(1).check();
-      try {
-        await page.getByRole('link', { name: /compare these rooms/i }).click();
-        await page.waitForSelector('[data-smoke=compare-table]', { timeout: 15000 });
+      const chip = page.locator('[data-smoke=location-chip]');
+      await chip.waitFor({ timeout: 15000 });
+      if (!/distances from you/i.test(await chip.innerText())) {
+        await chip.click();
+      }
+      await page.waitForFunction(
+        () => /[\d.]+ km from you \(straight-line\)/.test(document.body.innerText),
+        { timeout: 20000 },
+      );
+
+      // The walk stands in Lahore, so a Lahore room must be single-digit kilometres away.
+      // Guards the arithmetic itself: a broken haversine still prints a plausible-looking
+      // number, and only the magnitude gives it away.
+      const near = await page.$$eval('[data-smoke=result-card], article', (cards) =>
+        cards
+          .map((card) => Number((card.innerText.match(/([\d.]+) km from you/) || [])[1]))
+          .filter(Number.isFinite),
+      );
+      if (!near.some((km) => km < 20)) {
+        throw new Error('no room came out near Lahore: ' + near.join(', '));
+      }
+      if (near.some((km) => km > 20000)) {
+        throw new Error('a distance came out further than half the planet: ' + near.join(', '));
+      }
+
+      for (const path of ['/property/1', '/search/map']) {
+        await page.goto(APP + path, { waitUntil: 'networkidle' });
         await page.waitForFunction(
-          () => /[\d.]+ km \(straight-line\)/.test(document.body.innerText),
+          () => /[\d.]+ km from you \(straight-line\)/.test(document.body.innerText),
           { timeout: 20000 },
         );
-      } finally {
-        // Whatever happened, the selection must not follow the browser into later steps -
-        // it caps at three and a full basket disables every remaining tick.
-        await page.goto(APP + '/search', { waitUntil: 'networkidle' });
-        const clear = page.getByRole('button', { name: /^clear$/i });
-        if (await clear.count()) await clear.click();
+      }
+
+      await page.goto(APP + '/compare?ids=1,2,3', { waitUntil: 'networkidle' });
+      await page.waitForSelector('[data-smoke=compare-table]', { timeout: 15000 });
+      const table = await page.locator('[data-smoke=compare-table]').innerText();
+      if (!/Distance from you/.test(table) || !/[\d.]+ km \(straight-line\)/.test(table)) {
+        throw new Error('compare printed no distance from the person');
       }
     },
   },
@@ -613,37 +620,48 @@ export const WALK = [
     },
   },
   {
-    // Rule 7: one open request per listing, and a second is a 422. The listing has to say
-    // so before somebody fills in the form, so the seeker's own open request is followed
-    // back to the room it is for.
     name: 'a-room-you-already-asked-to-visit-says-so',
     as: 'seeker',
-    goto: '/property/4/visit',
-    // The step makes its own open request rather than relying on one in the seed: the seeded
-    // open ones get answered and cancelled by other steps, and a walk that only passes on
-    // Tuesday is worse than no walk. It cancels what it made, so a second run behaves the
-    // same as the first.
+    goto: '/property/4',
+    // Rule 7: one open request per listing. The step used to open one unconditionally and
+    // then fail on a 422 whenever a previous run had been interrupted before its cleanup -
+    // a walk that only passes on a clean database is a walk that gets ignored. It now reads
+    // the state first and creates a request only if there is not one already.
     do: async (page) => {
-      const when = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
-      when.setHours(11, 0, 0, 0);
-      const local = new Date(when.getTime() - when.getTimezoneOffset() * 60000)
-        .toISOString()
-        .slice(0, 16);
-      await page.fill('input[type=datetime-local]', local);
-      await page.getByRole('button', { name: /send the request/i }).click();
-      await page.waitForSelector('[data-smoke=visit-created]', { timeout: 20000 });
+      const alreadyOpen = await page
+        .waitForSelector('[data-smoke=visit-already-open]', { timeout: 6000 })
+        .then(() => true)
+        .catch(() => false);
 
-      await page.goto(APP + '/property/4', { waitUntil: 'networkidle' });
-      await page.waitForSelector('[data-smoke=visit-already-open]', { timeout: 15000 });
+      if (!alreadyOpen) {
+        await page.goto(APP + '/property/4/visit', { waitUntil: 'networkidle' });
+        const when = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000);
+        when.setHours(11, 0, 0, 0);
+        const local = new Date(when.getTime() - when.getTimezoneOffset() * 60000)
+          .toISOString()
+          .slice(0, 16);
+        await page.fill('input[type=datetime-local]', local);
+        await page.getByRole('button', { name: /send the request/i }).click();
+        await page.waitForSelector('[data-smoke=visit-created]', { timeout: 20000 });
+
+        await page.goto(APP + '/property/4', { waitUntil: 'networkidle' });
+        await page.waitForSelector('[data-smoke=visit-already-open]', { timeout: 15000 });
+      }
+
       if ((await page.getByRole('link', { name: /^request a visit$/i }).count()) > 0) {
         throw new Error('the listing still offers a second request');
       }
 
+      // Leave the account as it was found, so a second run behaves like the first.
       await page.goto(APP + '/visits', { waitUntil: 'networkidle' });
-      await page.getByRole('button', { name: /cancel request/i }).first().click();
-      await page.waitForTimeout(1500);
+      const cancel = page.getByRole('button', { name: /cancel request/i });
+      if (await cancel.count()) {
+        await cancel.first().click();
+        await page.waitForTimeout(1500);
+      }
     },
   },
+
   {
     // Rule 2 and brief 1.3: an unverified account may browse but not act. It used to be
     // dragged to /verify from the landing page, from search and from every listing,
@@ -785,7 +803,14 @@ async function run() {
   mkdirSync(SHOTS, { recursive: true });
 
   const browser = await chromium.launch({ channel: 'chrome', headless: !headed });
-  const context = await browser.newContext({ viewport: DEFAULT_VIEWPORT });
+  // Distances on this product are measured from the person, so the walk has to be somebody
+  // standing somewhere. Main Boulevard, Gulberg, Lahore - inside the seeded city, so the
+  // figures the pages print are the small ones a reader can sanity-check.
+  const context = await browser.newContext({
+    viewport: DEFAULT_VIEWPORT,
+    geolocation: { latitude: 31.5204, longitude: 74.3587 },
+    permissions: ['geolocation'],
+  });
   const page = await context.newPage();
 
   let problems = [];

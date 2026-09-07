@@ -7,6 +7,7 @@ import { BadgeComponent, EmptyStateComponent } from '../../shared/components';
 import { COMPARE_LIMIT, PropertyService } from '../../core/services/property.service';
 import { toFailure } from '../../core/http/api-error';
 import { PropertyCard } from '../../core/models/catalog.model';
+import { GeolocationService } from '../../core/services/geolocation.service';
 
 /**
  * Page 13: up to three listings beside each other.
@@ -28,6 +29,7 @@ export class CompareComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly properties = inject(PropertyService);
+  private readonly geo = inject(GeolocationService);
 
   readonly limit = COMPARE_LIMIT;
 
@@ -60,10 +62,14 @@ export class CompareComponent {
     { label: 'Beds free', get: (item) => `${item.availableBeds} of ${item.totalBeds}` },
     { label: 'Where', get: (item) => `${item.areaName}, ${item.cityName}` },
     {
-      label: 'Distance',
-      // Rule 13: straight-line, and labelled as such. Null is an absent distance, not zero.
-      get: (item) =>
-        item.distanceKm === null ? '—' : `${item.distanceKm.toFixed(1)} km (straight-line)`,
+      label: 'Distance from you',
+      // Rule 13: straight-line, and labelled as such. Worked out here from the person's own
+      // position, because the server measures only from a landmark. A dash is 'we do not
+      // know where you are', which is a question, not a zero.
+      get: (item) => {
+        const km = this.geo.distanceTo(item.latitude, item.longitude);
+        return km === null ? '—' : `${km.toFixed(1)} km (straight-line)`;
+      },
     },
     { label: 'Inspected', get: (item) => (item.hasInspectionBadge ? 'Yes' : 'Not yet') },
   ];

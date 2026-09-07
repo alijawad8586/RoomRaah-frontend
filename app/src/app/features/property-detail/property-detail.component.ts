@@ -7,6 +7,7 @@ import { AuthService } from '../../core/auth/auth.service';
 import { CompareStore } from '../../core/services/compare.store';
 import { EngagementService } from '../../core/services/engagement.service';
 import { MessagingService } from '../../core/services/messaging.service';
+import { GeolocationService } from '../../core/services/geolocation.service';
 import { PropertyService } from '../../core/services/property.service';
 import { toFailure } from '../../core/http/api-error';
 import {
@@ -44,12 +45,18 @@ const CHECK_LABELS: Record<VerificationCheckType, string> = {
 export class PropertyDetailComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly properties = inject(PropertyService);
+  private readonly geo = inject(GeolocationService);
   private readonly engagement = inject(EngagementService);
   private readonly messaging = inject(MessagingService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   /** Public: the template both reads the selection and adds this room to it. */
   readonly compare = inject(CompareStore);
+
+  /** Straight-line kilometres from the person to this room, or null if unknown. */
+  distanceFromYou(latitude: number, longitude: number): number | null {
+    return this.geo.distanceTo(latitude, longitude);
+  }
 
   readonly listing = signal<PropertyDetail | null>(null);
   readonly loading = signal(true);

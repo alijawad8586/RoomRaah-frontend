@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import * as L from 'leaflet';
 import { PropertyCard, PropertyFilters } from '../../core/models/catalog.model';
 import { toFailure } from '../../core/http/api-error';
+import { GeolocationService } from '../../core/services/geolocation.service';
 import { PropertyService } from '../../core/services/property.service';
 import { EmptyStateComponent } from '../../shared/components';
 import { readFilters, writeFilters } from './search.component';
@@ -22,6 +23,7 @@ const PAKISTAN_CENTRE: L.LatLngExpression = [30.3753, 69.3451];
 export class MapSearchComponent implements OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly properties = inject(PropertyService);
+  private readonly geo = inject(GeolocationService);
 
   readonly filters = signal<PropertyFilters>(readFilters(this.route.snapshot.queryParams));
   readonly results = signal<PropertyCard[]>([]);
@@ -63,6 +65,11 @@ export class MapSearchComponent implements OnDestroy {
     this.map?.remove();
     this.map = undefined;
     this.markers.clear();
+  }
+
+  /** Straight-line kilometres from the person to this room, or null if unknown. */
+  distanceFromYou(property: PropertyCard): number | null {
+    return this.geo.distanceTo(property.latitude, property.longitude);
   }
 
   select(property: PropertyCard): void {

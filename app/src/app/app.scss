@@ -208,8 +208,45 @@
     max-width: calc(100% - 120px);
   }
 
+  // The brand, the chip and the account row have to share one line at 360px. Left at its
+  // desktop width the chip pushed the row 33px past the viewport.
+  .location-chip {
+    max-width: 42vw;
+    padding: 0 0.5rem;
+    font-size: 0.8125rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   .account-name,
   .verify-nudge {
     display: none;
+  }
+}
+
+// The one control that turns distances on. Quiet by default and clearly on once granted,
+// because it changes what several other screens say rather than doing something here.
+.location-chip {
+  min-height: 36px;
+  padding: 0 0.75rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  background: #fff;
+  color: #0f2b46;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: progress;
+    opacity: 0.7;
+  }
+
+  &.is-on {
+    border-color: #16a36a;
+    background: #ecfdf5;
+    color: #0f7a4f;
   }
 }

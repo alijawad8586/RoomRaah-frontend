@@ -69,8 +69,9 @@
                   <p>{{ property.areaName }}, {{ property.cityName }}</p>
                   <p><strong>PKR {{ property.monthlyRent | number }}</strong> / month</p>
                   <p>{{ property.availableBeds }} {{ property.availableBeds === 1 ? 'bed' : 'beds' }} available</p>
-                  @if (property.distanceKm != null) {
-                    <p>{{ property.distanceKm | number:'1.0-1' }} km straight-line</p>
+                  @let km = distanceFromYou(property);
+                  @if (km !== null) {
+                    <p>{{ km | number:'1.0-1' }} km from you (straight-line)</p>
                   }
                   <button
                     type="button"

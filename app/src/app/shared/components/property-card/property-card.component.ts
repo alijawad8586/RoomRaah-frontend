@@ -1,9 +1,10 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { PropertyCardItem } from './property-card.model';
 import { BadgeComponent } from '../badge/badge.component';
 import { SkeletonComponent } from '../skeleton/skeleton.component';
+import { GeolocationService } from '../../../core/services/geolocation.service';
 
 @Component({
   selector: 'app-property-card',
@@ -13,6 +14,8 @@ import { SkeletonComponent } from '../skeleton/skeleton.component';
   styleUrls: ['./property-card.component.scss'],
 })
 export class PropertyCardComponent {
+  private readonly geo = inject(GeolocationService);
+
   @Input() property: PropertyCardItem | null = null;
   @Input() loading: boolean = false;
   @Input() isSaved: boolean = false;
@@ -64,11 +67,17 @@ export class PropertyCardComponent {
     }).format(this.property.monthlyRent);
   }
 
+  /**
+   * How far this room is from the person reading the card, worked out in the browser from
+   * their own position - the server only ever measures from a landmark. Rule 13 still
+   * applies: it is a straight line and it says so.
+   */
   get distanceLabel(): string | null {
-    if (!this.property || this.property.distanceKm === null || this.property.distanceKm === undefined) {
-      return null;
-    }
-    // Brief §8.3 & Rule 13: "Distance is straight-line. Label it that way."
-    return `${this.property.distanceKm.toFixed(1)} km (straight-line)`;
+    if (!this.property) return null;
+
+    const fromMe = this.geo.distanceTo(this.property.latitude, this.property.longitude);
+    if (fromMe !== null) return `${fromMe.toFixed(1)} km from you (straight-line)`;
+
+    return null;
   }
 }
