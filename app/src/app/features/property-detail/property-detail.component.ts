@@ -1,9 +1,11 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { BadgeComponent, ButtonComponent } from '../../shared/components';
 import { ReportDialogComponent } from './report-dialog.component';
+import { AuthService } from '../../core/auth/auth.service';
 import { EngagementService } from '../../core/services/engagement.service';
+import { MessagingService } from '../../core/services/messaging.service';
 import { PropertyService } from '../../core/services/property.service';
 import { toFailure } from '../../core/http/api-error';
 import {
@@ -42,6 +44,9 @@ export class PropertyDetailComponent {
   private readonly route = inject(ActivatedRoute);
   private readonly properties = inject(PropertyService);
   private readonly engagement = inject(EngagementService);
+  private readonly messaging = inject(MessagingService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly listing = signal<PropertyDetail | null>(null);
   readonly loading = signal(true);
@@ -53,6 +58,19 @@ export class PropertyDetailComponent {
 
   readonly activePhoto = signal(0);
   readonly reportOpen = signal(false);
+
+  readonly threadBusy = signal(false);
+  readonly threadError = signal<string | null>(null);
+
+  /**
+   * Only a seeker opens a thread - there is no directory of people to start one from, so
+   * an owner or an admin reading this page has nothing to press. Signed out is not one of
+   * those cases: that button works, and lands on the sign-in screen.
+   */
+  readonly canStartThread = computed(() => {
+    const role = this.auth.userRole();
+    return role === null || role === 'Seeker';
+  });
 
   readonly photos = computed(() => this.listing()?.photos ?? []);
   readonly hasBeds = computed(() => (this.listing()?.availableBeds ?? 0) > 0);
@@ -136,6 +154,36 @@ export class PropertyDetailComponent {
 
   toggleSave(id: number): void {
     this.engagement.toggle(id, `/property/${id}`);
+  }
+
+  /**
+   * Opens the thread for this listing and goes to it. Asking for the same thread twice is
+   * a 200 with the one that already exists, not an error, so there is nothing to check
+   * first - and the message page is where the conversation belongs, not a dialog here.
+   */
+  startThread(id: number): void {
+    if (!this.auth.isAuthenticated()) {
+      this.router.navigate(['/login'], { queryParams: { returnUrl: `/property/${id}` } });
+      return;
+    }
+    if (!this.auth.isEmailVerified()) {
+      this.router.navigate(['/verify']);
+      return;
+    }
+
+    this.threadBusy.set(true);
+    this.threadError.set(null);
+
+    this.messaging.open(id).subscribe({
+      next: (conversation) => {
+        this.threadBusy.set(false);
+        this.router.navigate(['/messages'], { queryParams: { c: conversation.id } });
+      },
+      error: (err) => {
+        this.threadError.set(toFailure(err).message);
+        this.threadBusy.set(false);
+      },
+    });
   }
 
   showPhoto(index: number): void {

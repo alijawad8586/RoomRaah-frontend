@@ -1,5 +1,5 @@
 import { Routes } from '@angular/router';
-import { ownerGuard, adminGuard, verifiedGuard } from './core/auth/guards';
+import { authGuard, ownerGuard, adminGuard, verifiedGuard } from './core/auth/guards';
 
 export const routes: Routes = [
   {
@@ -87,6 +87,20 @@ export const routes: Routes = [
         (m) => m.PropertyDetailComponent
       ),
     title: 'Listing — RoomRaah',
+  },
+  {
+    path: 'messages',
+    canActivate: [verifiedGuard],
+    loadComponent: () =>
+      import('./features/messages/messages.component').then((m) => m.MessagesComponent),
+    title: 'Messages — RoomRaah',
+  },
+  {
+    path: 'profile',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/profile/profile.component').then((m) => m.ProfileComponent),
+    title: 'Your account — RoomRaah',
   },
   {
     path: 'signup',

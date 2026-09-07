@@ -148,6 +148,13 @@ export const WALK = [
     },
   },
   {
+    name: 'messages-needs-an-account',
+    goto: '/messages',
+    do: async (page) => {
+      await page.waitForURL((u) => u.pathname.startsWith('/login'), { timeout: 10000 });
+    },
+  },
+  {
     name: 'not-found',
     goto: '/no-such-page',
     expect: [{ role: 'link', name: /search|home|roomraah/i }],
@@ -219,6 +226,60 @@ export const WALK = [
       await page.waitForSelector('[role=dialog]', { timeout: 5000 });
     },
     expect: [{ sel: '[role=dialog]' }, { role: 'button', name: /send report/i }],
+  },
+  {
+    // Contact in this product happens against a listing or not at all, so this button is
+    // the only door into messaging for a seeker. Asking for the same thread twice hands
+    // back the one that exists, which is why the step can run again and again.
+    name: 'message-the-owner-opens-a-thread',
+    as: 'seeker',
+    goto: '/property/4',
+    do: async (page) => {
+      await page.getByRole('button', { name: /message the owner/i }).click();
+      await page.waitForURL((u) => u.pathname.startsWith('/messages'), { timeout: 15000 });
+      await page.waitForSelector('[data-smoke=messages-thread]', { timeout: 15000 });
+    },
+    expect: [{ sel: '[data-smoke=messages-layout]' }],
+  },
+  {
+    name: 'messages',
+    as: 'seeker',
+    goto: '/messages',
+    expect: [
+      { role: 'heading', name: /^messages$/i },
+      { sel: '[data-smoke=messages-layout], [data-smoke=messages-empty]' },
+    ],
+  },
+  {
+    // A message must appear in the thread it was sent to, exactly once. Twice is the bug
+    // this feature is prone to - the hub pushes it and the poll fetches it again - and it
+    // reads as broken even though nothing is.
+    name: 'sending-a-message-shows-it-once',
+    as: 'seeker',
+    goto: '/messages',
+    do: async (page) => {
+      await page.waitForSelector('[data-smoke=messages-thread]', { timeout: 15000 });
+      const body = 'Smoke walk ' + Date.now();
+      await page.fill('#message-body', body);
+      await page.getByRole('button', { name: /^send$/i }).click();
+
+      const bubble = page.locator('[data-smoke=messages-thread]').getByText(body, { exact: true });
+      await bubble.first().waitFor({ timeout: 15000 });
+      // Give the fallback poll a turn, then check it did not draw a second copy.
+      await page.waitForTimeout(1500);
+      const drawn = await bubble.count();
+      if (drawn !== 1) throw new Error('the message was drawn ' + drawn + ' times');
+    },
+  },
+  {
+    name: 'profile',
+    as: 'seeker',
+    goto: '/profile',
+    expect: [
+      { sel: '[data-smoke=profile-card]' },
+      { sel: '[data-smoke=profile-name]' },
+      { role: 'button', name: /change your password/i },
+    ],
   },
   {
     name: 'owner-dashboard',

@@ -222,6 +222,21 @@
             Request a visit
           </a>
 
+          @if (canStartThread()) {
+            <app-button
+              variant="outline"
+              [fullWidth]="true"
+              [loading]="threadBusy()"
+              (clicked)="startThread(listing.id)"
+            >
+              Message the owner
+            </app-button>
+          }
+
+          @if (threadError()) {
+            <p class="action-error" role="alert">{{ threadError() }}</p>
+          }
+
           <app-button
             variant="outline"
             [fullWidth]="true"

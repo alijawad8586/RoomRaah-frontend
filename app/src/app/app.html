@@ -19,6 +19,12 @@
           <a routerLink="/saved" routerLinkActive="is-active" class="nav-link">Saved</a>
           <a routerLink="/visits" routerLinkActive="is-active" class="nav-link">My visits</a>
         }
+        <!-- Messaging is behind the verified guard, so it is offered only to somebody the
+             guard will let through - for anyone else this link is a bounce, which is the
+             same bug as a dead button. -->
+        @if (auth.isAuthenticated() && auth.isEmailVerified()) {
+          <a routerLink="/messages" routerLinkActive="is-active" class="nav-link">Messages</a>
+        }
         @if (auth.userRole() === 'Owner') {
           <a routerLink="/owner" routerLinkActive="is-active" class="nav-link">My listings</a>
         }
@@ -34,7 +40,9 @@
           @if (!auth.isEmailVerified()) {
             <a routerLink="/verify" class="verify-nudge">Verify your email</a>
           }
-          <span class="account-name">{{ auth.currentUser()?.fullName }}</span>
+          <a routerLink="/profile" routerLinkActive="is-active" class="account-name">
+            {{ auth.currentUser()?.fullName }}
+          </a>
           <app-button variant="outline" size="sm" (clicked)="auth.logout().subscribe()">
             Sign out
           </app-button>

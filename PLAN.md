@@ -62,7 +62,7 @@ not a status report and reading it to find out is the slow way.
 | D | Seeker actions: shortlist toggle, visit request, my visits, write review, report dialog | 15 | 40m | yes |
 | E | Owner dashboard + listing form, photo flow, revision states | 18 19 | 75m | yes |
 | F | Admin panel, five tabs | 20 | 60m | no |
-| G | Messages (REST polling) + profile | 16 17 | 45m | no |
+| G | Messages (hub + polling fallback) + profile | 16 17 | 45m | yes |
 | H | Map view; responsive pass at four breakpoints; accessibility pass; final verify | 09 | 40m | no |
 
 Green as of the last commit: guard clean, production build clean, unit tests passing,
@@ -75,9 +75,16 @@ one overruns, the scope inside it gets cut, not the clock, and the cut gets said
 
 ### Cut, deliberately, and what the user gets instead
 
-- **SignalR hub (brief §9).** The brief itself says REST first and that messaging must work
-  without WebSockets. Messages poll every 10 seconds. A judge cannot tell the difference in
-  a demo; the hub costs an hour we do not have.
+- ~~**SignalR hub (brief §9).**~~ **Un-cut.** The cut was costed wrongly: the hub is already
+  built and integration-tested on the backend — `/hubs/chat`, `ChatHub`, `IRealtimeNotifier`,
+  the `access_token` query-string read — so the frontend only ever needed a client, not an
+  hour. It also mattered more than it looked: the server emails a "you have a new message"
+  nudge to anybody it cannot push to, so a polling-only client means every message sends an
+  email. `RealtimeService` holds one connection for the whole session and loads
+  `@microsoft/signalr` behind a dynamic `import()`, which keeps it out of the initial bundle
+  (354.90 kB, up 2.13 kB). **Polling stays** as the fallback the brief requires: it runs only
+  while the hub is down, and both channels feed `upsertMessage` so a message arriving twice
+  draws one bubble.
 - ~~**Map tiles on page 09.**~~ **Un-cut.** The brief names Leaflet with OpenStreetMap for
   the owner's pin, and a map library is not a component library, so it does not touch the
   "no component library" decision. Installing it for page 19 makes page 09 cheap, so it is
