@@ -5,6 +5,7 @@ import { AuthService } from './core/auth/auth.service';
 import { GeolocationService } from './core/services/geolocation.service';
 import { RealtimeService } from './core/services/realtime.service';
 import { ButtonComponent } from './shared/components';
+import { ChatWidgetComponent } from './features/chat/chat-widget.component';
 
 @Component({
   selector: 'app-root',
@@ -15,6 +16,9 @@ import { ButtonComponent } from './shared/components';
     RouterLink,
     RouterLinkActive,
     ButtonComponent,
+    // Only ever rendered inside an `@defer` block in the template, which is what keeps it -
+    // and `ChatService` with the whole chat feature behind it - out of the initial bundle.
+    ChatWidgetComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',

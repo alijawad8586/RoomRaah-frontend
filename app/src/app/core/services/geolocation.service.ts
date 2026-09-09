@@ -1,4 +1,5 @@
 import { Injectable, computed, signal } from '@angular/core';
+import { haversineKm } from '../utils/geo.util';
 
 export interface Coords {
   lat: number;
@@ -8,7 +9,6 @@ export interface Coords {
 export type GeolocationState = 'idle' | 'asking' | 'granted' | 'denied' | 'unavailable';
 
 const STORAGE_KEY = 'roomraah.position';
-const EARTH_RADIUS_KM = 6371;
 
 /**
  * "How far is this room from *me*", answered in the browser.
@@ -96,18 +96,13 @@ export class GeolocationService {
   }
 }
 
-/** Rule 13's straight line, done locally. Good to a few metres at city scale. */
-export function haversineKm(a: Coords, b: Coords): number {
-  const toRad = (value: number) => (value * Math.PI) / 180;
-  const dLat = toRad(b.lat - a.lat);
-  const dLng = toRad(b.lng - a.lng);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
-
-  const h =
-    Math.sin(dLat / 2) ** 2 + Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
-  return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(h)));
-}
+/**
+ * Rule 13's straight line, done locally. The implementation moved to `utils/geo.util.ts`
+ * when the ranker turned out to need the same measurement; it is re-exported here so that
+ * `haversineKm` still arrives from this module for anything that already asks it for.
+ * `Coords` and `UserCoords` are the same shape, so every existing call is unchanged.
+ */
+export { haversineKm };
 
 function isSecure(): boolean {
   return typeof window !== 'undefined' && window.isSecureContext === true;

@@ -83,6 +83,16 @@
     <router-outlet></router-outlet>
   </main>
 
+  <!-- The assistant is available on every page, so it cannot be a lazy route the way the map
+       is. `@defer (on idle)` is the equivalent for something the shell owns: the chunk is
+       fetched once the browser has finished with the page it was asked for, so the initial
+       bundle carries none of the chat feature, and the bubble is there long before anybody
+       reaches for it. No placeholder, because a launcher that appears a moment late is
+       better than one that appears twice. -->
+  @defer (on idle) {
+    <app-chat-widget />
+  }
+
   <footer class="app-footer">
     <div class="container-centered footer-inner">
       <p class="footer-note">RoomRaah — rooms and hostels across Pakistan.</p>

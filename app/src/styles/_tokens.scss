@@ -22,6 +22,12 @@ $color-background: #F7F9FA;
 $color-surface: #ffffff;
 $color-surface-muted: #f1f5f9;
 
+/// Foreground for anything sitting on a filled brand or status colour - navy, green, danger.
+/// The same white as `$color-surface`, but a different job: this one is text and icons, that
+/// one is the sheet they sit on. Naming the pair separately means a future change to either
+/// does not silently drag the other with it.
+$color-text-on-primary: #ffffff;
+
 // Neutrals & Slate
 $color-slate-900: #0f172a;
 $color-slate-800: #1e293b;
